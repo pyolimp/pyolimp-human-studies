@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyOlimp human studies</title>
+    <style>
+        body {
+            background-color: gray; /* Set the background color to gray */
+            display: flex; /* Use flexbox to center the elements */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            height: 100vh; /* Full viewport height */
+            margin: 0; /* Remove default margin */
+            flex-direction: column; /* Stack elements vertically */
+        }
+        .doc, label {
+            margin-bottom: 8px; /* Space between label and input */
+            color: white; /* Label color */
+            font-size: 18px; /* Increase font size of label */
+        }
+        input[type="text"] {
+            padding: 10px; /* Add some padding */
+            font-size: 16px; /* Increase font size */
+            margin-bottom: 10px; /* Space between input and button */
+        }
+        button {
+            padding: 10px 20px; /* Button padding */
+            font-size: 16px; /* Button font size */
+            cursor: pointer; /* Change cursor on hover */
+        }
+    </style>
+    <script>
+    // globals
+    let username = null;
+
+    // utils
+    let $ = document.getElementById.bind(document);
+    const delay = (ms) => new Promise(c => setTimeout(c, ms));
+
+    async function post(url, data) {
+        const body = JSON.stringify(data);
+        const response = await fetch(url, {body: body, method: "POST", headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }});
+        const json = await response.json();
+        return json;
+    }
+    // utils page
+    function show_page(page_id) {
+        let cur_page;
+        for (const page of document.body.children) {
+            if (page.id === page_id) {
+                page.style.display = "";
+                cur_page = page;
+            } else {
+                page.style.display = "none";
+            }
+        }
+        return cur_page;
+    }
+    async function ask_username() {
+        show_page("login");
+    }
+
+    async function test_clicked(event) {
+        const target = event.target;
+        if (target.tagName === "BUTTON" && target.type === "submit") {
+            const the_test = JSON.parse(this.dataset.the_test);
+            const answer = {test: the_test, response: target.textContent};
+            const current_index = JSON.parse(sessionStorage.getItem(`${window.location.pathname}`) ?? '0');
+            sessionStorage.setItem(`${window.location.pathname}`, JSON.stringify(current_index + 1));
+
+            const test_test = await request_next_test(answer);
+            await create_test_page(test_test);
+        }
+    }
+
+    async function create_test_page(the_test) {
+        if (the_test.finished) {
+            const page = show_page("test_finished");
+            if (the_test.text) {
+                page.textContent = the_test.text;
+            }
+            return
+        }
+        const page = show_page("test_div");
+        if (the_test.start_pause_ms) {
+            page.innerHTML = `please wait for ${the_test.start_pause_ms/1000} seconds`;
+            await delay(page.start_pause_ms)
+        }
+        const lines = []  // `TEST STARTS ${JSON.stringify(the_test)}`
+        lines.push('<div style="display:flex">');
+        for (let frame of the_test.frames) {
+            lines.push(`<img style="flex:50%" src="file/${frame.path}">`,
+            );
+        }
+        lines.push("</div>");
+
+        lines.push('<div style="display:flex;justify-content:center;">');
+        for (let choice of the_test.choices) {
+            lines.push(`<button>${choice}</button>`)
+        }
+        lines.push("</div>");
+        page.innerHTML = lines.join("\n");
+    }
+
+    async function request_next_test(answer=null) {
+        const current_index = JSON.parse(sessionStorage.getItem(`${window.location.pathname}`) ?? '0');
+        if (!username) {
+            alert("invalid username (programmer error)");
+        }
+        const url = `${window.location.pathname}${current_index}`;
+        const the_test = await post(url, { username, answer });
+        $("test_div").dataset.the_test = JSON.stringify(the_test);
+        return the_test;
+    }
+
+    async function next_step() {
+        if (username === null) {
+            await ask_username();
+        } else {
+            $("user_label").innerHTML = `Hi, ${username}`
+            const the_test = await request_next_test(undefined);
+            await create_test_page(the_test);
+        }
+    }
+
+    async function setup() {
+        username = sessionStorage.getItem("username");
+        $("login_btn").addEventListener("click", async () => {
+            username = $("username_input").value;
+            sessionStorage.setItem("username", username);
+            await next_step();
+        });
+        $("test_div").addEventListener("click", test_clicked);
+        await next_step();
+    }
+
+    document.addEventListener("DOMContentLoaded", setup);
+    </script>
+</head>
+<body>
+<div id="login" style="display: none;">
+    <div class="doc">{{ doc }}</div>
+    <label for="username_input">Username</label>
+    <input type="text" id="username_input" placeholder="Enter your username..." />
+    <button id="login_btn" type="button">Confirm</button>
+</div>
+<div id="test_div" style="display: none;">
+    <span id="user_label"></span>
+</div>
+<div id="test_finished" style="display: none;">
+    Test finished.
+</div>
+</body>
+</html>

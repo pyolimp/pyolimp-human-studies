@@ -1,0 +1,4 @@
+*.jpg
+*.png
+__pycache__
+*.ldj

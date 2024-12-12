@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - v*
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  main:
+    name: Run PyOlimp Human Studies Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: psf/black@stable
