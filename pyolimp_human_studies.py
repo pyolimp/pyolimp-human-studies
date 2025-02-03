@@ -21,7 +21,9 @@ from pathlib import Path
 
 import importlib
 
-scenarios = [path.stem for path in (Path(__file__).parent / "scenarios").glob("*.py")]
+scenarios = [
+    path.stem for path in (Path(__file__).parent / "scenarios").glob("*.py")
+]
 
 
 @runtime_checkable
@@ -29,7 +31,7 @@ class TestCase(Protocol):
     def __init__(self): ...
 
     # raise IndexError when test is over
-    def item_for_user(self, username: str, idx: int) -> Any: ...
+    def item_for_user(self, seed: int, idx: int) -> Any: ...
 
     def file(self, path: str) -> Response: ...
 
@@ -39,7 +41,9 @@ case_instances: dict[tuple[str, str], TestCase] = {}
 
 @app.route("/")
 def list_scenarios() -> str:
-    links = [(f"study/{scenario}/", scenario.capitalize()) for scenario in scenarios]
+    links = [
+        (f"study/{scenario}/", scenario.capitalize()) for scenario in scenarios
+    ]
     return render_template("links_list.html", title="Scenarios", links=links)
 
 
@@ -57,7 +61,9 @@ def list_cases(scenario: str) -> str:
     ]
     links = [(f"{case}/", case.capitalize()) for case in cases]
     return render_template(
-        "links_list.html", title=f"Cases for {scenario.capitalize()}", links=links
+        "links_list.html",
+        title=f"Cases for {scenario.capitalize()}",
+        links=links,
     )
 
 
@@ -88,7 +94,7 @@ def study_scenario_case_index(
     scenario_name: str, case_name: str, index: int
 ) -> Response:
     data = request.json
-    username = data["username"]
+    username = str(data["username"])
     case = get_case_instance(scenario_name=scenario_name, case_name=case_name)
     if data.get("answer"):
         answer = data["answer"]
@@ -97,12 +103,16 @@ def study_scenario_case_index(
         answer["username"] = username
         with open("answers.ldj", "a") as ldj:
             ldj.write(
-                json.dumps(data["answer"], separators=(",", ":"), sort_keys=True) + "\n"
+                json.dumps(
+                    data["answer"], separators=(",", ":"), sort_keys=True
+                )
+                + "\n"
             )
     try:
-        return case.item_for_user(username=username, idx=index)
+        seed = int(data["seed"])
+        return case.item_for_user(seed=seed, idx=index)
     except IndexError:
-        return {"finished": True, "text": "Congratulations! You've done it!"}
+        return {"finished": True, "text": "Thanks for participating!"}
 
 
 @app.route("/study/<scenario_name>/<case_name>/file/<path:file_path>")

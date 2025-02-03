@@ -29,10 +29,16 @@
             font-size: 16px; /* Button font size */
             cursor: pointer; /* Change cursor on hover */
         }
+        #user_label {
+            position: absolute;
+            top: 1em;
+            right: 2em;
+        }
     </style>
     <script>
     // globals
     let username = null;
+    let seed = null;
 
     // utils
     let $ = document.getElementById.bind(document);
@@ -60,7 +66,9 @@
         }
         return cur_page;
     }
-    async function ask_username() {
+    function ask_username() {
+        seed = username = null;
+        sessionStorage.setItem(`${window.location.pathname}`, JSON.stringify(0));
         show_page("login");
     }
 
@@ -69,7 +77,7 @@
         if (target.tagName === "BUTTON" && target.type === "submit") {
             const the_test = JSON.parse(this.dataset.the_test);
             const answer = {test: the_test, response: target.textContent};
-            const current_index = JSON.parse(sessionStorage.getItem(`${window.location.pathname}`) ?? '0');
+            const current_index = JSON.parse(sessionStorage.getItem(`${window.location.pathname}`));
             sessionStorage.setItem(`${window.location.pathname}`, JSON.stringify(current_index + 1));
 
             const test_test = await request_next_test(answer);
@@ -80,21 +88,27 @@
     async function create_test_page(the_test) {
         if (the_test.finished) {
             const page = show_page("test_finished");
-            if (the_test.text) {
-                page.textContent = the_test.text;
-            }
+            page.querySelector("label").textContent = the_test.text || '';
             return
         }
-        const page = show_page("test_div");
+        const page = show_page("test_div").querySelector("#test_content");
         if (the_test.start_pause_ms) {
             page.innerHTML = `please wait for ${the_test.start_pause_ms/1000} seconds`;
             await delay(page.start_pause_ms)
         }
         const lines = []  // `TEST STARTS ${JSON.stringify(the_test)}`
-        lines.push('<div style="display:flex">');
+        lines.push(`<div style="display:flex;gap:${ the_test.gap ?? '8em'}">`);
         for (let frame of the_test.frames) {
-            lines.push(`<img style="flex:50%" src="file/${frame.path}">`,
-            );
+            const buttons = frame["choices"] && [
+                frame.choices.map(choice => `<button>${choice}</button>`)
+            ]
+            lines.push(
+                '<div style="flex:50%">',
+                `<img src="file/${frame.path}">`)
+            if (buttons) {
+                lines.push('<div style="text-align: center;">' + buttons + '</div>')
+            }
+            lines.push('</div>')
         }
         lines.push("</div>");
 
@@ -112,8 +126,8 @@
             alert("invalid username (programmer error)");
         }
         const url = `${window.location.pathname}${current_index}`;
-        const the_test = await post(url, { username, answer });
-        $("test_div").dataset.the_test = JSON.stringify(the_test);
+        const the_test = await post(url, { username, seed, answer });
+        $("test_content").dataset.the_test = JSON.stringify(the_test);
         return the_test;
     }
 
@@ -129,12 +143,16 @@
 
     async function setup() {
         username = sessionStorage.getItem("username");
+        seed = sessionStorage.getItem("seed");
         $("login_btn").addEventListener("click", async () => {
             username = $("username_input").value;
+            seed = new Date().getTime();
             sessionStorage.setItem("username", username);
+            sessionStorage.setItem("seed", seed);
             await next_step();
         });
-        $("test_div").addEventListener("click", test_clicked);
+        $("test_content").addEventListener("click", test_clicked);  // check "submit" was clicked
+        $("start_over").addEventListener("click", ask_username);
         await next_step();
     }
 
@@ -150,9 +168,11 @@
 </div>
 <div id="test_div" style="display: none;">
     <span id="user_label"></span>
+    <div id="test_content"></div>
 </div>
 <div id="test_finished" style="display: none;">
-    Test finished.
+    <label>Test finished.</label>
+    <button id="start_over">Start over</button>
 </div>
 </body>
 </html>
