@@ -144,13 +144,24 @@
     async function setup() {
         username = sessionStorage.getItem("username");
         seed = sessionStorage.getItem("seed");
-        $("login_btn").addEventListener("click", async () => {
-            username = $("username_input").value;
+        async function start_for_user() {
             seed = new Date().getTime();
             sessionStorage.setItem("username", username);
             sessionStorage.setItem("seed", seed);
             await next_step();
+        }
+        $("login_btn").addEventListener("click", async () => {
+            username = $("username_input").value;
+            await start_for_user();
         });
+        $("username_input").addEventListener("keydown", async function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();  // just in case
+                username = this.value.trim();
+                await start_for_user();
+            }
+        });
+
         $("test_content").addEventListener("click", test_clicked);  // check "submit" was clicked
         $("start_over").addEventListener("click", ask_username);
         await next_step();
