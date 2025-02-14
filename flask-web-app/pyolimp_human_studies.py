@@ -104,7 +104,10 @@ def study_scenario_case_index(
         with open("answers.ldj", "a") as ldj:
             ldj.write(
                 json.dumps(
-                    data["answer"], separators=(",", ":"), sort_keys=True
+                    data["answer"],
+                    separators=(",", ":"),
+                    sort_keys=True,
+                    ensure_ascii=False,
                 )
                 + "\n"
             )
