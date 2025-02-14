@@ -97,6 +97,9 @@
             await delay(page.start_pause_ms)
         }
         const lines = []  // `TEST STARTS ${JSON.stringify(the_test)}`
+        if (the_test.text) {
+            lines.push(the_test.text);
+        }
         lines.push(`<div style="display:flex;gap:${ the_test.gap ?? '8em'}">`);
         for (let frame of the_test.frames) {
             const buttons = frame["choices"] && [
@@ -172,7 +175,7 @@
 </head>
 <body>
 <div id="login" style="display: none;">
-    <div class="doc">{{ doc }}</div>
+    <div class="doc">{{ doc|safe }}</div>
     <label for="username_input">Username</label>
     <input type="text" id="username_input" placeholder="Enter your username..." />
     <button id="login_btn" type="button">Confirm</button>
