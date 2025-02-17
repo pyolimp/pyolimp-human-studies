@@ -101,6 +101,10 @@ def study_scenario_case_index(
         answer["scenario_name"] = scenario_name
         answer["case_name"] = case_name
         answer["username"] = username
+        filter = getattr(case, "filter")
+        if filter is None:
+            filter = lambda d: d.pop("text", None)
+        answer = filter(answer)
         with open("answers.ldj", "a") as ldj:
             ldj.write(
                 json.dumps(

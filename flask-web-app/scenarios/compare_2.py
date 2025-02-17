@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TypedDict, NotRequired
+from typing import TypedDict, NotRequired, Generator, Iterator
 from pathlib import Path
 from itertools import combinations
 from random import Random
@@ -14,8 +14,9 @@ class Frame(TypedDict):
 class SingleTest(TypedDict):
     start_pause_ms: NotRequired[float]
     frames: list[Frame]
-    choices: list[str]
-    gap: NotRequired[str]  # list "100px on 8em"
+    choices: list[str]  # global choices
+    gap: NotRequired[str]  # gap size, for example "100px on 8em"
+    text: NotRequired[str]  # text that is shown above question
 
 
 class Test1:
@@ -72,12 +73,10 @@ WELCOME = """<p>
     и останутся <b>анонимными</b>.
 </ul>"""
 
-QUESTION = (
-    """<p style="width:fit-content;margin:0 auto 5em;">
+QUESTION = """<p style="width:fit-content;margin:0 auto 5em;">
 Пожалуйста, внимательно сравните оба изображения.<br>
 Если вы предпочитаете одно из них, нажмите соответствующую кнопку.<br>
-Если выбор затруднителен, воспользуйтесь кнопкой «Не знаю».<p>""",
-)
+Если выбор затруднителен, воспользуйтесь кнопкой «Не знаю».<p>"""
 
 
 class TestCompareRVIMethods:
@@ -107,7 +106,10 @@ class TestCompareRVIMethods:
         return send_from_directory(self._root, path)
 
     def item_for_user(self, seed: int, idx: int) -> SingleTest:
-        paths = Random(seed).sample(self._items, k=10)[idx]
+        random = Random(seed)
+        paths = list(random.sample(self._items, k=30)[idx])
+        random.shuffle(paths)
+
         ret: SingleTest = {
             "start_pause_ms": 1500,
             "frames": [
@@ -143,9 +145,10 @@ class TestCompareRVIMetrict:
         return send_from_directory(self._root, path)
 
     def item_for_user(self, seed: int, idx: int) -> SingleTest:
-        paths = Random(seed).sample(self._items, k=10)[idx]
+        random = Random(seed)
+        paths = list(random.sample(self._items, k=30)[idx])
+        random.shuffle(paths)
         ret: SingleTest = {
-            "start_pause_ms": 1500,
             "frames": [
                 {"path": str(paths[0]), "choices": ["Левое"]},
                 {"path": str(paths[1]), "choices": ["Правое"]},
@@ -169,21 +172,30 @@ class TestCompareRVICorr:
             path for path in self._root.iterdir() if path.is_dir()
         ]
         all_test_paths.sort()
+
+        def create_checks(
+            paths: Generator[Path, None, None]
+        ) -> Iterator[tuple[Path, Path]]:
+            for path in paths:
+                if path.name == "ms-ssim.png":
+                    continue
+                path = path.relative_to(self._root)
+                yield (path, path.with_name("ms-ssim.png"))
+
         self._items = list(
-            paths
+            item
             for test_path in all_test_paths
-            for paths in combinations(
-                [p.relative_to(self._root) for p in test_path.glob("*.png")], 2
-            )
+            for item in create_checks(test_path.glob("*.png"))
         )
 
     def file(self, path: str) -> Response:
         return send_from_directory(self._root, path)
 
     def item_for_user(self, seed: int, idx: int) -> SingleTest:
-        paths = Random(seed).sample(self._items, k=10)[idx]
+        random = Random(seed)
+        paths = list(random.sample(self._items, k=30)[idx])
+        random.shuffle(paths)
         ret: SingleTest = {
-            "start_pause_ms": 1500,
             "frames": [
                 {"path": str(paths[0]), "choices": ["Левое"]},
                 {"path": str(paths[1]), "choices": ["Правое"]},
