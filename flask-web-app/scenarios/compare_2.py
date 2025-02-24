@@ -3,7 +3,7 @@ from typing import TypedDict, NotRequired, Generator, Iterator
 from pathlib import Path
 from itertools import combinations
 from random import Random
-from flask import Response, send_from_directory
+from flask import Response, send_from_directory, jsonify
 
 
 class Frame(TypedDict):
@@ -123,6 +123,11 @@ class TestCompareRVIMethods:
         }
         return ret
 
+    def items(self) -> Response:
+        return jsonify(
+            [[str(path) for path in paths] for paths in self._items]
+        )
+
 
 class TestCompareRVIMetrict:
     __doc__ = WELCOME
@@ -159,6 +164,11 @@ class TestCompareRVIMetrict:
             "text": QUESTION,
         }
         return ret
+
+    def items(self) -> Response:
+        return jsonify(
+            [[str(path) for path in paths] for paths in self._items]
+        )
 
 
 class TestCompareRVICorr:
@@ -206,3 +216,8 @@ class TestCompareRVICorr:
             "text": QUESTION,
         }
         return ret
+
+    def items(self) -> Response:
+        return jsonify(
+            [[str(path) for path in paths] for paths in self._items]
+        )
