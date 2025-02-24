@@ -89,6 +89,14 @@ def study_scenario_case(scenario_name: str, case_name: str) -> str:
     return render_template("index.html", doc=case.__doc__)
 
 
+@app.route("/study/<scenario_name>/<case_name>/items")
+def study_scenario_case_items(scenario_name: str, case_name: str) -> Response:
+    case = get_case_instance(scenario_name=scenario_name, case_name=case_name)
+    if not hasattr(case, "items"):
+        abort(404)
+    return case.items()
+
+
 @app.post("/study/<scenario_name>/<case_name>/<int:index>")
 def study_scenario_case_index(
     scenario_name: str, case_name: str, index: int
