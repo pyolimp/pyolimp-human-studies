@@ -11,9 +11,10 @@ Request scenario:
 
 from __future__ import annotations
 from typing import Any, Protocol, runtime_checkable
+from datetime import datetime
+import json
 from flask import Flask
 from flask import request, render_template, Response, abort
-import json
 
 
 app = Flask(__name__)
@@ -105,10 +106,12 @@ def study_scenario_case_index(
     username = str(data["username"])
     case = get_case_instance(scenario_name=scenario_name, case_name=case_name)
     if data.get("answer"):
+        now = datetime.now()
         answer = data["answer"]
         answer["scenario_name"] = scenario_name
         answer["case_name"] = case_name
         answer["username"] = username
+        answer["ts"] = f"{now:%Y%m%dT%H%M%S}"
         filter = getattr(case, "filter", None)
         if filter is None:
             filter = lambda d: d.pop("text", None)
