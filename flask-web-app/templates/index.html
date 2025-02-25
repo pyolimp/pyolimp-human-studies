@@ -75,6 +75,7 @@
     async function test_clicked(event) {
         const target = event.target;
         if (target.tagName === "BUTTON" && target.type === "submit") {
+            $("test_content").querySelectorAll("button").forEach(el => {el.disabled = true;});
             const the_test = JSON.parse(this.dataset.the_test);
             const answer = {test: the_test, response: target.textContent};
             const current_index = JSON.parse(sessionStorage.getItem(`${window.location.pathname}`));
