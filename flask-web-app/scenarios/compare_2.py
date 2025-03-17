@@ -184,7 +184,7 @@ class TestCompareRVICorr:
         all_test_paths.sort()
 
         def create_checks(
-            paths: Generator[Path, None, None]
+            paths: Generator[Path, None, None],
         ) -> Iterator[tuple[Path, Path]]:
             for path in paths:
                 if path.name == "ms-ssim.png":
