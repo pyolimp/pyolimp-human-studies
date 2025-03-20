@@ -89,21 +89,20 @@ class TestCompareRVIMethods:
 
     def __init__(self) -> None:
         self._root = Path(
-            "/home/human_studies/projects/dataset_compare_rvi_methods"
+            "/home/human_studies/projects/hs_pyolimp_data/rvi_compare_methods"
         )
-        all_test_paths = [
-            subpath
-            for path in self._root.iterdir()
-            if path.is_dir()
-            for subpath in path.iterdir()
-            if subpath.is_dir()
-        ]
+        all_test_paths = list(self._root.rglob("**/pair_*/"))
         all_test_paths.sort()
         self._items = list(
             paths
             for test_path in all_test_paths
             for paths in combinations(
-                [p.relative_to(self._root) for p in test_path.glob("*.png")], 2
+                [
+                    p.relative_to(self._root)
+                    for p in test_path.glob("*.png")
+                    if p.name != "target.png"
+                ],
+                2,
             )
         )
 
