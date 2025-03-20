@@ -30,10 +30,10 @@ scenarios = [
 @runtime_checkable
 class TestCase(Protocol):
     # optional documentation for the test is HTML format
-    __doc__: ClassVar[str] | None
+    # __doc__: ClassVar[str] | None
 
     # Optional CSS rules
-    CSS: ClassVar[str] | None
+    # CSS: ClassVar[str] | None
 
     def __init__(self): ...
 
