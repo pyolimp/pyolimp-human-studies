@@ -10,7 +10,7 @@ Request scenario:
 """
 
 from __future__ import annotations
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable, ClassVar
 from datetime import datetime
 import json
 from flask import Flask
@@ -29,6 +29,12 @@ scenarios = [
 
 @runtime_checkable
 class TestCase(Protocol):
+    # optional documentation for the test is HTML format
+    __doc__: ClassVar[str] | None
+
+    # Optional CSS rules
+    CSS: ClassVar[str] | None
+
     def __init__(self): ...
 
     # raise IndexError when test is over
@@ -87,7 +93,9 @@ def get_case_instance(scenario_name: str, case_name: str) -> TestCase:
 @app.route("/study/<scenario_name>/<case_name>/")
 def study_scenario_case(scenario_name: str, case_name: str) -> str:
     case = get_case_instance(scenario_name=scenario_name, case_name=case_name)
-    return render_template("index.html", doc=case.__doc__)
+    return render_template(
+        "index.html", doc=case.__doc__, css=getattr(case, "CSS", None)
+    )
 
 
 @app.route("/study/<scenario_name>/<case_name>/items")

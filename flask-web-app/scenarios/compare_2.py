@@ -24,6 +24,8 @@ class Test1:
     Информация о тесте.
     """
 
+    CSS = """img {width: 37vw;}"""
+
     def __init__(self) -> None:
         self._root = Path(__file__).parent / "test_images"
         all_paths = self._root.glob("*.*")
@@ -78,9 +80,12 @@ QUESTION = """<p style="width:fit-content;margin:0 auto 5em;">
 Если вы предпочитаете одно из них, нажмите соответствующую кнопку.<br>
 Если выбор затруднителен, воспользуйтесь кнопкой «Не знаю».<p>"""
 
+CSS_2_PICTURES = """img {width: 37vw;}"""
+
 
 class TestCompareRVIMethods:
     __doc__ = WELCOME
+    CSS = CSS_2_PICTURES
 
     def __init__(self) -> None:
         self._root = Path(
@@ -131,6 +136,7 @@ class TestCompareRVIMethods:
 
 class TestCompareRVIMetrict:
     __doc__ = WELCOME
+    CSS = CSS_2_PICTURES
 
     def __init__(self) -> None:
         self._root = Path(
@@ -173,6 +179,7 @@ class TestCompareRVIMetrict:
 
 class TestCompareRVICorr:
     __doc__ = WELCOME
+    CSS = CSS_2_PICTURES
 
     def __init__(self) -> None:
         self._root = Path(
