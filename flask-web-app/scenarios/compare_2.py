@@ -1,25 +1,13 @@
 from __future__ import annotations
-from typing import TypedDict, NotRequired, Generator, Iterator
+from typing import Generator, Iterator
 from pathlib import Path
 from itertools import combinations
 from random import Random
 from flask import Response, send_from_directory, jsonify
+from . import Scenario, SingleTest
 
 
-class Frame(TypedDict):
-    path: str
-    choices: NotRequired[list[str]]
-
-
-class SingleTest(TypedDict):
-    start_pause_ms: NotRequired[float]
-    frames: list[Frame]
-    choices: list[str]  # global choices
-    gap: NotRequired[str]  # gap size, for example "100px on 8em"
-    text: NotRequired[str]  # text that is shown above question
-
-
-class Test1:
+class Test1(Scenario):
     """
     Информация о тесте.
     """
@@ -55,6 +43,11 @@ class Test1:
         }
         return ret
 
+    def items(self) -> Response:
+        return jsonify(
+            [[str(path) for path in paths] for paths in self._items]
+        )
+
 
 WELCOME = """<p>
 Добро пожаловать в эксперимент по изучению восприятия изображений!<br>
@@ -83,7 +76,7 @@ QUESTION = """<p style="width:fit-content;margin:0 auto 5em;">
 CSS_2_PICTURES = """img {width: 37vw;}"""
 
 
-class TestCompareRVIMethods:
+class TestCompareRVIMethods(Scenario):
     __doc__ = WELCOME
     CSS = CSS_2_PICTURES
 
@@ -133,7 +126,7 @@ class TestCompareRVIMethods:
         )
 
 
-class TestCompareRVIMetrict:
+class TestCompareRVIMetrict(Scenario):
     __doc__ = WELCOME
     CSS = CSS_2_PICTURES
 
@@ -176,7 +169,7 @@ class TestCompareRVIMetrict:
         )
 
 
-class TestCompareRVICorr:
+class TestCompareRVICorr(Scenario):
     __doc__ = WELCOME
     CSS = CSS_2_PICTURES
 

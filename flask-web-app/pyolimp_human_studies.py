@@ -10,11 +10,11 @@ Request scenario:
 """
 
 from __future__ import annotations
-from typing import Any, Protocol, runtime_checkable, ClassVar
 from datetime import datetime
 import json
 from flask import Flask
 from flask import request, render_template, Response, abort
+from scenarios import Scenario
 
 
 app = Flask(__name__)
@@ -23,27 +23,13 @@ from pathlib import Path
 import importlib
 
 scenarios = [
-    path.stem for path in (Path(__file__).parent / "scenarios").glob("*.py")
+    path.stem
+    for path in (Path(__file__).parent / "scenarios").glob("*.py")
+    if path.name != "__init__.py"
 ]
 
 
-@runtime_checkable
-class TestCase(Protocol):
-    # optional documentation for the test is HTML format
-    # __doc__: ClassVar[str] | None
-
-    # Optional CSS rules
-    # CSS: ClassVar[str] | None
-
-    def __init__(self): ...
-
-    # raise IndexError when test is over
-    def item_for_user(self, seed: int, idx: int) -> Any: ...
-
-    def file(self, path: str) -> Response: ...
-
-
-case_instances: dict[tuple[str, str], TestCase] = {}
+case_instances: dict[tuple[str, str], Scenario] = {}
 
 
 @app.route("/")
@@ -64,7 +50,8 @@ def list_cases(scenario: str) -> str:
         for key, value in module.__dict__.items()
         if not key.startswith("__")
         and isinstance(value, type)
-        and issubclass(value, TestCase)
+        and issubclass(value, Scenario)
+        and value is not Scenario
     ]
     links = [(f"{case}/", case.capitalize()) for case in cases]
     return render_template(
@@ -74,7 +61,7 @@ def list_cases(scenario: str) -> str:
     )
 
 
-def get_case_instance(scenario_name: str, case_name: str) -> TestCase:
+def get_case_instance(scenario_name: str, case_name: str) -> Scenario:
     key = scenario_name, case_name
     if key in case_instances:
         return case_instances[key]
@@ -83,7 +70,7 @@ def get_case_instance(scenario_name: str, case_name: str) -> TestCase:
         abort(404)
     module = importlib.import_module(f"scenarios.{scenario_name}")
     case_cls = getattr(module, case_name, None)
-    if case_cls is None or not issubclass(case_cls, TestCase):
+    if case_cls is None or not issubclass(case_cls, Scenario):
         # print(f"no case scenarios.{scenario_name}.{case_name}")
         abort(404)
     isinstance = case_instances[key] = case_cls()
@@ -112,6 +99,7 @@ def study_scenario_case_index(
 ) -> Response:
     data = request.json
     username = str(data["username"])
+    seed = int(data["seed"])
     case = get_case_instance(scenario_name=scenario_name, case_name=case_name)
     if data.get("answer"):
         now = datetime.now()
@@ -119,11 +107,10 @@ def study_scenario_case_index(
         answer["scenario_name"] = scenario_name
         answer["case_name"] = case_name
         answer["username"] = username
+        answer["seed"] = seed
         answer["ts"] = f"{now:%Y%m%dT%H%M%S}"
-        filter = getattr(case, "filter", None)
-        if filter is None:
-            filter = lambda d: d.pop("text", None)
-        answer = filter(answer)
+        filter = getattr(case, "filter")
+        filter(answer)
         with open("answers.ldj", "a") as ldj:
             ldj.write(
                 json.dumps(
@@ -135,7 +122,6 @@ def study_scenario_case_index(
                 + "\n"
             )
     try:
-        seed = int(data["seed"])
         return case.item_for_user(seed=seed, idx=index)
     except IndexError:
         return {"finished": True, "text": "Thanks for participating!"}
