@@ -71,8 +71,9 @@ WELCOME = """
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    max-width:50%;
-    min-width:300px;
+    max-width: 50%;
+    min-width: 300px;
+    margin: auto;
 }
 h1 {
     color: #2c3e50;
@@ -92,13 +93,11 @@ li {
     margin-bottom: 8px;
 }
 .important-note {
-    /*background-color: #f8f4e5;*/
     border-left: 4px solid #f39c12;
     padding: 15px;
     margin: 20px 0;
 }
 .options {
-    /*background-color: #e8f4f8;*/
     padding: 15px;
     border-radius: 5px;
 }
