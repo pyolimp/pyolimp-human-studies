@@ -56,8 +56,12 @@
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         }});
-        const json = await response.json();
-        return json;
+        try {
+            const json = await response.json();
+            return json;
+        } catch(e) {
+            alert(`Sever down: ${e}`);
+        }
     }
     // utils page
     function show_page(page_id) {
