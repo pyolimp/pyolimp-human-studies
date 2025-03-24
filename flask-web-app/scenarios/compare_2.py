@@ -183,6 +183,7 @@ class TestCompareRVIMethods(Scenario):
 
         ret: SingleTest = {
             "start_pause_ms": 1500,
+            "check_time_ms": 5000,
             "frames": [
                 {"path": str(paths[0]), "choices": ["Левое"]},
                 {
@@ -193,7 +194,6 @@ class TestCompareRVIMethods(Scenario):
             "choices": [
                 "Не знаю",
             ],
-            "text": QUESTION,
         }
         return ret
 
