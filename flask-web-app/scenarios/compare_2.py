@@ -53,15 +53,17 @@ class Test1(Scenario):
         )
 
 
-WELCOME = """
-<script>
+FULL_SCREEN = """<script>
 document.addEventListener("DOMContentLoaded", () => {
     const login_btn= document.getElementById("login_btn");
     login_btn.addEventListener("click", () => {
         login_btn.requestFullscreen();
     });
 });
-</script>
+</script>"""
+
+
+WELCOME = """
 <style>
 .container {
     background-color: #aaa;
