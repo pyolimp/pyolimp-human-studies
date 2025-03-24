@@ -34,6 +34,10 @@
             top: 1em;
             right: 2em;
         }
+        #auth {
+            margin: 1em auto;
+            text-align: center;
+        }
         {{ css|safe }}
     </style>
     <script>
@@ -185,9 +189,11 @@
 <body>
 <div id="login" style="display: none;">
     <div class="doc">{{ doc|safe }}</div>
-    <label for="username_input">Username</label>
-    <input type="text" id="username_input" placeholder="Enter your username..." value="Anonymous-{{ range(10000, 100000000) | random }}" />
-    <button id="login_btn" type="button">Confirm</button>
+    <div id="auth">
+        <label for="username_input">Username</label>
+        <input type="text" id="username_input" placeholder="Enter your username..." value="Anonymous-{{ range(10000, 100000000) | random }}" />
+        <button id="login_btn" type="button">Confirm</button>
+    </div>
 </div>
 <div id="test_div" style="display: none;">
     <span id="user_label"></span>
