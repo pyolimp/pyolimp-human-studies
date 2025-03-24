@@ -34,7 +34,11 @@ class Test1(Scenario):
         paths = Random(seed).sample(self._items, k=5)[idx]
         ret: SingleTest = {
             "start_pause_ms": 1500,
-            "frames": [{"path": path} for path in paths],
+            "check_time_ms": 5000,
+            "frames": [
+                {"path": path, "choices": [f"choice {idx}"]}
+                for idx, path in enumerate(paths)
+            ],
             "choices": [
                 "left",
                 "right",

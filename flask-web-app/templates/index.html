@@ -40,6 +40,7 @@
     // globals
     let username = null;
     let seed = null;
+    let hide_timer = undefined;
 
     // utils
     let $ = document.getElementById.bind(document);
@@ -123,6 +124,12 @@
         }
         lines.push("</div>");
         page.innerHTML = lines.join("\n");
+        if (the_test.check_time_ms) {
+            clearTimeout(hide_timer);
+            hide_timer = setTimeout(() => {
+                page.querySelectorAll("img").forEach(el => {el.style.visibility = "hidden";});
+            }, the_test.check_time_ms)
+        }
     }
 
     async function request_next_test(answer=null) {
