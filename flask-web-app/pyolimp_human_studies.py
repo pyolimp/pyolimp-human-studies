@@ -12,6 +12,7 @@ Request scenario:
 from __future__ import annotations
 from datetime import datetime
 import json
+from fcntl import flock, LOCK_EX, LOCK_UN
 from flask import Flask
 from flask import request, render_template, Response, abort
 from scenarios import Scenario
@@ -111,16 +112,21 @@ def study_scenario_case_index(
         answer["ts"] = f"{now:%Y%m%dT%H%M%S}"
         filter = getattr(case, "filter")
         filter(answer)
-        with open("answers.ldj", "a") as ldj:
-            ldj.write(
-                json.dumps(
-                    data["answer"],
-                    separators=(",", ":"),
-                    sort_keys=True,
-                    ensure_ascii=False,
-                )
-                + "\n"
+        line = (
+            json.dumps(
+                data["answer"],
+                separators=(",", ":"),
+                sort_keys=True,
+                ensure_ascii=False,
             )
+            + "\n"
+        )
+
+        with open("answers.ldj", "a") as ldj:
+            # use process locking to allow multiprocess server execution
+            flock(ldj, LOCK_EX)
+            ldj.write(line)
+            flock(ldj, LOCK_UN)
     try:
         return case.item_for_user(seed=seed, idx=index)
     except IndexError:
