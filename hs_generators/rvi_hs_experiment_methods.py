@@ -176,7 +176,7 @@ def main():
                 f"hs_content/methods/{psf_cat_short}/{img_cat_short}"
             )
 
-            output_dir.mkdir(exist_ok=True)
+            output_dir.mkdir(parents=True, exist_ok=True)
 
             for i in range(args.n):
                 img, img_path = select_random_img(
@@ -192,7 +192,7 @@ def main():
                 psf_scaled_shift = torch.fft.fftshift(psf_scaled)
 
                 pair_dir = output_dir / f"pair_{i}"
-                pair_dir.mkdir(exist_ok=True)
+                pair_dir.mkdir(parents=True, exist_ok=True)
 
                 psf_filename = pair_dir / "psf.npy"
                 torch.save(psf_scaled.cpu(), psf_filename)
