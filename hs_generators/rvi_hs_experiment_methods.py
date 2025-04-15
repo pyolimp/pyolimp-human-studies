@@ -12,7 +12,7 @@ from olimp.precompensation.nn.models.unet_efficient_b0 import (
 )
 
 from olimp.dataset.sca_2023 import sca_2023
-from olimp.dataset import read_img_path, ProgressCallback
+from olimp.dataset import read_img_path, ProgressContext
 
 from olimp.processing import resize_kernel, fft_conv, scale_value
 
@@ -27,6 +27,7 @@ import argparse
 import random
 import json
 from pathlib import Path
+from contextlib import contextmanager
 
 from rich.progress import (
     Progress,
@@ -49,9 +50,9 @@ methods: dict[str, Callable[[Any, Any], Any]] = {
 
 
 def load_sca_dataset(
-    category: str, progress_callback: ProgressCallback
+    category: str, progress_context: ProgressContext
 ) -> dict[str, list[str]]:
-    return sca_2023(categories={category}, progress_callback=progress_callback)
+    return sca_2023(categories={category}, progress_context=progress_context)
 
 
 def select_random_img(
@@ -153,19 +154,21 @@ def main():
         )
         task_ds = progress.add_task("Dataset...", total=1.0)
 
+        @contextmanager
+        def progress_callback():
+            yield lambda description, completed: progress.update(
+                task_ds, completed=completed, description=description
+            )
+
         for img_cat, psf_cat in product(img_categories, psf_categories):
             progress.update(task_ds, completed=0.0, description="Loading...")
 
-            def progress_callback(description: str, done: float):
-                progress.update(
-                    task_ds, completed=done, description=description
-                )
 
             olimp_img_dataset: dict[str, list[str]] = load_sca_dataset(
-                img_cat, progress_callback
+                img_cat, progress_callback()
             )
             sca_psf_dataset: dict[str, list[str]] = load_sca_dataset(
-                psf_cat, progress_callback
+                psf_cat, progress_callback()
             )
 
             print(f"Select category: {img_cat} | {psf_cat}")
