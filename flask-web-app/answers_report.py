@@ -29,14 +29,16 @@ def load_answers(json_path: str) -> Iterable[Answer]:
 
 
 def get_method_name(path: str) -> str:
+    # Вытащим последнее имя файла без расширения
     return os.path.splitext(os.path.basename(path))[0].lower()
 
 
 class Case:
-    def __init__(self) -> None:
+    def __init__(self):
         self.results: dict[tuple[str, ...], list[float]] = defaultdict(list)
+        self.counts: dict[tuple[str, ...], int] = defaultdict(int)
 
-    def add_answer(self, answer: Answer) -> None:
+    def add_answer(self, answer: Answer):
         test = answer["test"]
         response = answer["response"]
 
@@ -46,6 +48,7 @@ class Case:
 
         if key not in self.results:
             self.results[key] = [0.0 for _ in key]
+            self.counts[key] = 0
 
         if response == "Не знаю":
             for idx in range(len(frames)):
@@ -60,30 +63,34 @@ class Case:
 
             if not answer_found:
                 print(
-                    f"Warning: '{response}' not found in choices of any frame "
-                    f"in case '{answer['case_name']}'"
+                    f"Warning: '{response}' не найден в choices ни одного кадра в кейсе '{answer['case_name']}'"
                 )
 
+        self.counts[key] += 1  # ⬅️ увеличиваем количество голосов на пару
+
     def get_rows(self):
-        for key, result in self.results.items():
-            yield key, result
+        for key in self.results:
+            yield key, self.results[key], self.counts[
+                key
+            ]  # теперь count — это int
 
     def get_total(self):
         return sum(sum(result) for result in self.results.values())
 
 
-def build_confusion_and_draw_tables(case: Case) -> None:
+def build_confusion_and_draw_tables(case: Case):
     win_matrix = defaultdict(lambda: defaultdict(int))
     draw_counts = defaultdict(lambda: defaultdict(int))
     all_methods = set()
 
-    for paths, scores in case.get_rows():
+    for paths, scores, _ in case.get_rows():
         methods = [get_method_name(p) for p in paths]
         all_methods.update(methods)
 
         if len(methods) != len(scores):
-            continue
+            continue  # безопасность
 
+        # сравнение всех попарно
         for i in range(len(methods)):
             for j in range(i + 1, len(methods)):
                 m1, m2 = methods[i], methods[j]
@@ -98,6 +105,7 @@ def build_confusion_and_draw_tables(case: Case) -> None:
 
     sorted_methods = sorted(all_methods)
 
+    # Матрица побед
     header = [""] + sorted_methods
     table = []
     for row_method in sorted_methods:
@@ -109,9 +117,10 @@ def build_confusion_and_draw_tables(case: Case) -> None:
                 row.append(win_matrix[row_method][col_method])
         table.append(row)
 
-    print("\nMatrix of confusion (victory over other methods):")
+    print("\nМатрица конфузии (победы над другими методами):")
     print(tabulate(table, headers=header, tablefmt="grid"))
 
+    # Таблица ничьих
     draw_table = []
     done_pairs = set()
     for m1 in sorted_methods:
@@ -136,25 +145,47 @@ def build_confusion_and_draw_tables(case: Case) -> None:
             )
         )
     else:
-        print("\nDraws: none found.")
+        print("\nНичьи: не обнаружены.")
 
 
 def save_case_results_to_csv(
     case: Case, filename: str, output_dir: str = "results_csv"
-) -> None:
+):
     os.makedirs(output_dir, exist_ok=True)
     csv_path = os.path.join(output_dir, filename)
 
     with open(csv_path, mode="w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["path1", "path2", "score1", "score2"])
-        for paths, results in case.get_rows():
-            if len(paths) == 2 and len(results) == 2:
-                writer.writerow([paths[0], paths[1], results[0], results[1]])
+        writer.writerow(
+            [
+                "path1",
+                "path2",
+                "score1",
+                "score2",
+                "norm_score1",
+                "norm_score2",
+            ]
+        )
+        for paths, scores, count in case.get_rows():
+            if len(paths) == 2 and len(scores) == 2:
+                norm_scores = [
+                    round(scores[0] / count, 3) if count > 0 else 0.0,
+                    round(scores[1] / count, 3) if count > 0 else 0.0,
+                ]
+                writer.writerow(
+                    [
+                        paths[0],
+                        paths[1],
+                        scores[0],
+                        scores[1],
+                        norm_scores[0],
+                        norm_scores[1],
+                    ]
+                )
             else:
-                print(f"Пропущено (не пара): {paths} -> {results}")
+                print(f"Пропущено (не пара): {paths} -> {scores}")
 
-    print(f"CSV saved: {csv_path}")
+    print(f"CSV сохранён: {csv_path}")
 
 
 def process_answers(json_path: str):
@@ -164,10 +195,12 @@ def process_answers(json_path: str):
         cases[answer["case_name"]].add_answer(answer)
 
     for case_name, case in cases.items():
-        print(f"\nCase: {case_name}")
-        for paths, results in case.get_rows():
-            print(f"Paths: {paths}\nResults: {results}")
-        print(f"Total number of responses: {case.get_total()}\n")
+        print(f"\nКейс: {case_name}")
+        for paths, results, counts in case.get_rows():
+            print(
+                f"Пути: {paths}\nРезультаты: {results}\nКол-во голосов: {counts}"
+            )
+        print(f"Общее количество ответов: {case.get_total()}\n")
 
         build_confusion_and_draw_tables(case)
 

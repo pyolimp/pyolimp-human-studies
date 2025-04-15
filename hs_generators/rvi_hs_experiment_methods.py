@@ -163,7 +163,6 @@ def main():
         for img_cat, psf_cat in product(img_categories, psf_categories):
             progress.update(task_ds, completed=0.0, description="Loading...")
 
-
             olimp_img_dataset: dict[str, list[str]] = load_sca_dataset(
                 img_cat, progress_callback()
             )
