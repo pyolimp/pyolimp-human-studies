@@ -1,7 +1,7 @@
 import json
 from argparse import ArgumentParser
 from collections import defaultdict
-from typing import Iterable, TypedDict, List, Dict
+from typing import Iterable, TypedDict
 from tabulate import tabulate
 import os
 import csv
@@ -9,11 +9,11 @@ import csv
 
 class Frame(TypedDict, total=False):
     path: str
-    choices: List[str]
+    choices: list[str]
 
 
 class SingleTest(TypedDict):
-    frames: List[Frame]
+    frames: list[Frame]
 
 
 class Answer(TypedDict):
@@ -35,8 +35,8 @@ def get_method_name(path: str) -> str:
 
 class Case:
     def __init__(self):
-        self.results: Dict[tuple[str, ...], List[float]] = defaultdict(list)
-        self.counts: Dict[tuple[str, ...], int] = defaultdict(int)
+        self.results: dict[tuple[str, ...], list[float]] = defaultdict(list)
+        self.counts: dict[tuple[str, ...], int] = defaultdict(int)
 
     def add_answer(self, answer: Answer):
         test = answer["test"]
@@ -48,7 +48,7 @@ class Case:
 
         if key not in self.results:
             self.results[key] = [0.0 for _ in key]
-            self.counts[key] = 0  # ⬅️ фикс
+            self.counts[key] = 0
 
         if response == "Не знаю":
             for idx in range(len(frames)):
