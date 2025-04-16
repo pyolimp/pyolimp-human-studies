@@ -123,7 +123,7 @@ li {
     </p>
 
     <p>
-      На каждый выбор у вас будет 5 секунд. После того, как они закончатся,
+      На каждый выбор у вас будет 7 секунд. После того, как они закончатся,
       вам будут предложены варианты ответа: предпочитаете ли вы левое,
       правое или не можете решить, какое предпочесть.
       Всего вам предстоит пройти серию из 30 сравнений.
@@ -184,7 +184,7 @@ class TestCompareRVIMethods(Scenario):
 
         ret: SingleTest = {
             "start_pause_ms": 1500,
-            "check_time_ms": 5000,
+            "check_time_ms": 7000,
             "frames": [
                 {"path": str(paths[0]), "choices": ["Левое"]},
                 {
@@ -204,23 +204,29 @@ class TestCompareRVIMethods(Scenario):
         )
 
 
-class TestCompareRVIMetrict(Scenario):
+class TestCompareRVIMetrics(Scenario):
     __doc__ = WELCOME
-    CSS = CSS_2_PICTURES
+    CSS = CSS_3_PICTURES
 
     def __init__(self) -> None:
         self._root = Path(
-            "/home/human_studies/projects/dataset_compare_rvi_metrics"
+            "/home/human_studies/projects/hs_pyolimp_data/rvi_compare_metrics"
         )
+        all_test_paths = list(self._root.rglob("**/pair_*/"))
+        all_test_paths.sort()
         self._items = list(
-            tuple(
-                [path.relative_to(self._root) for path in path.glob("*.png")]
+            paths
+            for test_path in all_test_paths
+            for paths in combinations(
+                [
+                    p.relative_to(self._root)
+                    for p in test_path.glob("*.png")
+                    if p.name != "target.png"
+                    if p.name != "blurred.png"
+                ],
+                2,
             )
-            for path in self._root.iterdir()
-            if path.is_dir()
         )
-        for item in self._items:
-            assert len(item) == 2, item
 
     def file(self, path: str) -> Response:
         return send_from_directory(self._root, path)
@@ -229,15 +235,20 @@ class TestCompareRVIMetrict(Scenario):
         random = Random(seed)
         paths = list(random.sample(self._items, k=30)[idx])
         random.shuffle(paths)
+
         ret: SingleTest = {
+            "start_pause_ms": 1500,
+            "check_time_ms": 7000,
             "frames": [
                 {"path": str(paths[0]), "choices": ["Левое"]},
+                {
+                    "path": str(paths[0].with_name("target.png")),
+                },
                 {"path": str(paths[1]), "choices": ["Правое"]},
             ],
             "choices": [
                 "Не знаю",
             ],
-            "text": QUESTION,
         }
         return ret
 
@@ -247,32 +258,28 @@ class TestCompareRVIMetrict(Scenario):
         )
 
 
-class TestCompareRVICorr(Scenario):
+class TestCompareCorrMSSim(Scenario):
     __doc__ = WELCOME
-    CSS = CSS_2_PICTURES
+    CSS = CSS_3_PICTURES
 
     def __init__(self) -> None:
         self._root = Path(
-            "/home/human_studies/projects/dataset_compare_rvi_corr"
+            "/home/human_studies/projects/hs_pyolimp_data/human_studies_corr_mssim"
         )
-        all_test_paths = [
-            path for path in self._root.iterdir() if path.is_dir()
-        ]
+        all_test_paths = list(self._root.rglob("**/pair_*/"))
         all_test_paths.sort()
-
-        def create_checks(
-            paths: Generator[Path, None, None],
-        ) -> Iterator[tuple[Path, Path]]:
-            for path in paths:
-                if path.name == "ms-ssim.png":
-                    continue
-                path = path.relative_to(self._root)
-                yield (path, path.with_name("ms-ssim.png"))
-
         self._items = list(
-            item
+            paths
             for test_path in all_test_paths
-            for item in create_checks(test_path.glob("*.png"))
+            for paths in combinations(
+                [
+                    p.relative_to(self._root)
+                    for p in test_path.glob("*.png")
+                    if p.name != "target.png"
+                    if p.name != "blurred.png"
+                ],
+                2,
+            )
         )
 
     def file(self, path: str) -> Response:
@@ -282,15 +289,20 @@ class TestCompareRVICorr(Scenario):
         random = Random(seed)
         paths = list(random.sample(self._items, k=30)[idx])
         random.shuffle(paths)
+
         ret: SingleTest = {
+            "start_pause_ms": 1500,
+            "check_time_ms": 7000,
             "frames": [
                 {"path": str(paths[0]), "choices": ["Левое"]},
+                {
+                    "path": str(paths[0].with_name("target.png")),
+                },
                 {"path": str(paths[1]), "choices": ["Правое"]},
             ],
             "choices": [
                 "Не знаю",
             ],
-            "text": QUESTION,
         }
         return ret
 
