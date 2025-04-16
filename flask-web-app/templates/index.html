@@ -127,7 +127,7 @@
         lines.push("</div>");
 
         lines.push('<div style="display:flex;justify-content:center;">');
-        for (let choice of the_test.choices) {
+        for (let choice of the_test.choices || []) {
             lines.push(`<button>${choice}</button>`)
         }
         lines.push("</div>");

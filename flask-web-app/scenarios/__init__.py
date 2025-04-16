@@ -13,7 +13,7 @@ class SingleTest(TypedDict):
     start_pause_ms: NotRequired[float]  # show gray screen before
     check_time_ms: NotRequired[float]  # hide choices in
     frames: list[Frame]
-    choices: list[str]  # global choices
+    choices: NotRequired[list[str]]  # global choices
     gap: NotRequired[str]  # gap size, for example "100px on 8em"
     text: NotRequired[str]  # text that is shown above question
 
