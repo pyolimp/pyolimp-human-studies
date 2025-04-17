@@ -66,13 +66,11 @@ class Case:
                     f"Warning: '{response}' не найден в choices ни одного кадра в кейсе '{answer['case_name']}'"
                 )
 
-        self.counts[key] += 1  # ⬅️ увеличиваем количество голосов на пару
+        self.counts[key] += 1
 
     def get_rows(self):
         for key in self.results:
-            yield key, self.results[key], self.counts[
-                key
-            ]  # теперь count — это int
+            yield key, self.results[key], self.counts[key]
 
     def get_total(self):
         return sum(sum(result) for result in self.results.values())
