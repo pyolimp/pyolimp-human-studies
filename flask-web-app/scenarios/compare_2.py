@@ -63,8 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>"""
 
 
-WELCOME = """
-<style>
+WELCOME_CSS = """<style>
 .container {
     background-color: #aaa;
     color: black;
@@ -109,8 +108,11 @@ li {
     content: "• ";
     color: #000040;
 }
-</style>
+</style>"""
 
+WELCOME = (
+    WELCOME_CSS
+    + """
 <div class="container">
     <h1>Эксперимент по изучению восприятия изображений</h1>
 
@@ -140,6 +142,7 @@ li {
     </div>
 </div>
 """
+)
 
 QUESTION = """<p style="width:fit-content;margin:0 auto 5em;">
 Пожалуйста, внимательно сравните оба изображения.<br>
@@ -341,6 +344,102 @@ class TestRankCorrMSSimm(Scenario):
                 {"path": str(path.with_name("target.png"))},
                 {"path": str(path), "choices": ["1", "2", "3", "4", "5"]},
             ],
+        }
+        return ret
+
+    def items(self) -> Response:
+        return jsonify(list(map(str, self._items)))
+
+
+class TestCVD(Scenario):
+    __doc__ = (
+        WELCOME_CSS
+        + """<div class="container">
+    <h1>Эксперимент по оценке алгоритмов улучшения восприятия при нарушениях цветового зрения</h1>
+
+    <p>Добро пожаловать в эксперимент по оценке алгоритмов улучшения цветового восприятия для людей с нарушением различения красного и зелёного цветов (дальтинизмом)!</p>
+    <p>
+      Для людей с дальтонизмом зачастую может быть проблемой не только различить, где красный цвет, а где зеленый, но и заметить границу
+      между разными цветами. На экране вам будет показано исходное изображение (в центре) и два варианта (слева и справа),
+      симулирующих видение человека с нарушениями цветового зрения, обработанных разными алгоритмами компенсации.
+    </p>
+
+    <p>
+      Ваша задача:
+      <ul>
+        <li>Рассмотрите внимательно исходное изображение. Найдите границы между зеленым и красным цветами. Посмотрите, насколько хорошо
+        объекты этих цветов отличимы друг от друга на двух вариантах симуляции — слева и справа.
+
+        <li> Рассмотрите внимательно симулированные изображения. Не возникло ли на них ложных различий цветов, которых не было на исходном
+        изображении?</li>
+
+        <li>На основе всего увиденного выберите, какой вариант предобработки — правый или левый — вы бы предпочли на месте человека с
+        нарушениями цветового зрения?</li>
+      </ul>
+    </p>
+
+    <div class="important-note">
+        <h2>Важно:</h2>
+        <ul>
+            <li>Эксперимент полностью анонимен. Вы можете указать псевдоним, если хотите, но это не обязательно.</li>
+            <li>Проходить эксперимент следует только на компьютере или ноутбуке — использование телефонов и планшетов запрещено.</li>
+            <li>Если вы носите очки, проходите эксперимент в них.</li>
+        </ul>
+    </div>
+</div>
+"""
+    )
+    TEXT = """<p style="width:fit-content;margin:0 auto 5em;">
+Пожалуйста, внимательно сравните изображения справа и слева.<br>
+Оцените, какой вариант обработки лучше передает различия цветов там, где на оригинальном изображении границы красного и зеленого цветов,<br>
+и не вносит лишних искажений там, где таких различий на исходном изображении нет.<br>
+Выберите тот вариант, который обеспечивает более качественную компенсацию.<br>
+Если разница неочевидна или вы не можете выбрать, нажмите кнопку «Затрудняюсь ответить».
+</p>
+"""
+    CSS = CSS_3_PICTURES
+
+    def __init__(self) -> None:
+        self._root = Path(
+            "/home/human_studies/projects/hs_pyolimp_data/human_studies_cvd"
+        )
+        all_test_paths = list(self._root.rglob("**/pair_*/"))
+        all_test_paths.sort()
+        self._items = list(
+            paths
+            for test_path in all_test_paths
+            for paths in combinations(
+                [
+                    p.relative_to(self._root)
+                    for p in test_path.glob("*.png")
+                    if p.name != "target.png"
+                ],
+                2,
+            )
+        )
+
+    def file(self, path: str) -> Response:
+        return send_from_directory(self._root, path)
+
+    def item_for_user(self, seed: int, idx: int) -> SingleTest:
+        random = Random(seed)
+        paths = list(random.sample(self._items, k=30)[idx])
+        random.shuffle(paths)
+
+        ret: SingleTest = {
+            "start_pause_ms": 1500,
+            "check_time_ms": 7000,
+            "frames": [
+                {"path": str(paths[0]), "choices": ["Левое"]},
+                {
+                    "path": str(paths[0].with_name("target.png")),
+                },
+                {"path": str(paths[1]), "choices": ["Правое"]},
+            ],
+            "choices": [
+                "Не знаю",
+            ],
+            "text": self.TEXT,
         }
         return ret
 
