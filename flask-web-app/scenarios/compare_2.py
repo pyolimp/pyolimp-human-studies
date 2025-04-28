@@ -310,3 +310,39 @@ class TestCompareCorrMSSim(Scenario):
         return jsonify(
             [[str(path) for path in paths] for paths in self._items]
         )
+
+
+class TestRankCorrMSSimm(Scenario):
+    __doc__ = "Вам скажут, что надо делать"
+    CSS = CSS_3_PICTURES
+
+    def __init__(self) -> None:
+        self._root = Path(
+            "/home/human_studies/projects/hs_pyolimp_data/human_studies_corr_mssim"
+        )
+        corrs = sorted(self._root.rglob("**/pair_*/corr_cf1.2000_white.png"))[
+            :15
+        ]
+        self._items: list[Path] = []
+        for corr in corrs:
+            corr = corr.relative_to(self._root)
+            self._items.append(corr)
+            self._items.append(corr.with_name("ms-ssim.png"))
+
+    def file(self, path: str) -> Response:
+        return send_from_directory(self._root, path)
+
+    def item_for_user(self, seed: int, idx: int) -> SingleTest:
+        path = self._items[idx]
+        ret: SingleTest = {
+            "start_pause_ms": 1500,
+            "check_time_ms": 7000,
+            "frames": [
+                {"path": str(path.with_name("target.png"))},
+                {"path": str(path), "choices": ["1", "2", "3", "4", "5"]},
+            ],
+        }
+        return ret
+
+    def items(self) -> Response:
+        return jsonify(list(map(str, self._items)))
