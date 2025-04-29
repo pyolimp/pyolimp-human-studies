@@ -411,8 +411,7 @@ class TestCVD(Scenario):
             for paths in combinations(
                 [
                     p.relative_to(self._root)
-                    for p in test_path.glob("*.png")
-                    if p.name != "target.png"
+                    for p in test_path.glob("*_sim.png")
                 ],
                 2,
             )
@@ -423,12 +422,10 @@ class TestCVD(Scenario):
 
     def item_for_user(self, seed: int, idx: int) -> SingleTest:
         random = Random(seed)
-        paths = list(random.sample(self._items, k=30)[idx])
+        paths = list(random.sample(self._items, k=15)[idx])
         random.shuffle(paths)
 
         ret: SingleTest = {
-            "start_pause_ms": 1500,
-            "check_time_ms": 7000,
             "frames": [
                 {"path": str(paths[0]), "choices": ["Левое"]},
                 {
