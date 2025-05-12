@@ -1,8 +1,10 @@
+#!/usr/bin/env python3
 import json
 from argparse import ArgumentParser
 from collections import defaultdict
 from typing import Iterable, TypedDict
 from tabulate import tabulate
+import sys
 import os
 import csv
 
@@ -23,7 +25,11 @@ class Answer(TypedDict):
 
 
 def load_answers(json_path: str) -> Iterable[Answer]:
-    with open(json_path, encoding="utf8") as f:
+    if json_path == "-":
+        f = sys.stdin
+    else:
+        f = open(json_path, encoding="utf8")
+    with f:
         for line in f:
             yield json.loads(line)
 
@@ -46,25 +52,30 @@ class Case:
         frames = sorted(frames, key=lambda frame: frame["path"])
         key = tuple(frame["path"] for frame in frames)
 
-        if key not in self.results:
-            self.results[key] = [0.0 for _ in key]
-            self.counts[key] = 0
+        if len(frames) != 1:  # frame
+            if key not in self.results:
+                self.results[key] = [0.0 for _ in key]
+                self.counts[key] = 0
+            if response == "Не знаю":
+                for idx in range(len(frames)):
+                    self.results[key][idx] += 0.5
+            else:
+                answer_found = False
+                for idx, frame in enumerate(frames):
+                    if response in frame["choices"]:
+                        self.results[key][idx] += 1
+                        answer_found = True
+                        break
 
-        if response == "Не знаю":
-            for idx in range(len(frames)):
-                self.results[key][idx] += 0.5
+                if not answer_found:
+                    print(
+                        f"Warning: '{response}' не найден в choices ни одного кадра в кейсе '{answer['case_name']}'"
+                    )
         else:
-            answer_found = False
-            for idx, frame in enumerate(frames):
-                if response in frame["choices"]:
-                    self.results[key][idx] += 1
-                    answer_found = True
-                    break
-
-            if not answer_found:
-                print(
-                    f"Warning: '{response}' не найден в choices ни одного кадра в кейсе '{answer['case_name']}'"
-                )
+            if key not in self.results:
+                self.results[key] = list(range(len(frames[0]["choices"])))
+                self.counts[key] = 0
+            self.results[key][int(response) - 1] += 1
 
         self.counts[key] += 1  # ⬅️ увеличиваем количество голосов на пару
 
@@ -182,6 +193,22 @@ def save_case_results_to_csv(
                         norm_scores[1],
                     ]
                 )
+            elif len(paths) == 1 and len(scores) == 5:
+                count_scores = sum(scores)
+                sum_scores = sum(
+                    [cnt * val for cnt, val in enumerate(scores, 1)]
+                )
+                norm_score = sum_scores / count_scores
+                writer.writerow(
+                    [
+                        paths[0],
+                        None,
+                        sum_scores,
+                        None,
+                        norm_score,
+                        None,
+                    ]
+                )
             else:
                 print(f"Пропущено (не пара): {paths} -> {scores}")
 
@@ -211,7 +238,10 @@ def process_answers(json_path: str):
 def main():
     parser = ArgumentParser(description="Process answers JSONL file")
     parser.add_argument(
-        "json_path", type=str, help="Path to answers JSONL file"
+        "json_path",
+        nargs="?",
+        help="Path to answers JSONL file",
+        default="answers.ldj",
     )
     args = parser.parse_args()
     process_answers(args.json_path)
