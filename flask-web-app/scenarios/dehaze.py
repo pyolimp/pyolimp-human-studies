@@ -6,7 +6,6 @@ from flask import Response, send_from_directory, jsonify
 from . import Scenario, SingleTest
 import json
 
-
 FULL_SCREEN = """<script>
 document.addEventListener("DOMContentLoaded", () => {
     const login_btn= document.getElementById("login_btn");
@@ -64,9 +63,7 @@ li {
 }
 </style>"""
 
-WELCOME = (
-    WELCOME_CSS
-    + """<div class="container">
+WELCOME = WELCOME_CSS + """<div class="container">
     <h1>Эксперимент по оценке методов раздымки изображений</h1>
 
     <p>Добро пожаловать в эксперимент! В нём вам будут показаны изображения,
@@ -93,7 +90,6 @@ WELCOME = (
     </div>
 </div>
 """
-)
 
 QUESTION = """<p style="width:fit-content;margin:0 auto 5em;">
 Пожалуйста, внимательно сравните оба изображения.<br>
