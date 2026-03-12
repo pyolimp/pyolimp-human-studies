@@ -20,7 +20,6 @@ import hashlib
 from pathlib import Path
 import importlib
 
-
 app = Flask(__name__)
 app.config.from_file("config_hs.json", load=json.load)
 assert "SECRET_KEY" in app.config, (
