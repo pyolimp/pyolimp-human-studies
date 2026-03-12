@@ -39,7 +39,7 @@ scenarios = [
 case_instances: dict[tuple[str, str], Scenario] = {}
 
 
-@app.route("/")
+@app.get("/")
 def list_scenarios() -> str:
     links = [
         (f"study/{scenario}/", scenario.capitalize()) for scenario in scenarios
@@ -51,7 +51,7 @@ answers_root = Path(__file__).with_name("answers")
 answers_root.mkdir(exist_ok=True)
 
 
-@app.route("/study/<scenario>/")
+@app.get("/study/<scenario>/")
 def list_cases(scenario: str) -> str:
     if scenario not in scenarios:
         abort(404)
@@ -72,7 +72,7 @@ def list_cases(scenario: str) -> str:
     )
 
 
-def get_case_instance(scenario_name: str, case_name: str) -> Scenario:
+def _get_case_instance(scenario_name: str, case_name: str) -> Scenario:
     key = scenario_name, case_name
     if key in case_instances:
         return case_instances[key]
@@ -90,7 +90,7 @@ def get_case_instance(scenario_name: str, case_name: str) -> Scenario:
 
 @app.get("/study/<scenario_name>/<case_name>/")
 def study_scenario_case(scenario_name: str, case_name: str) -> str:
-    case = get_case_instance(scenario_name=scenario_name, case_name=case_name)
+    case = _get_case_instance(scenario_name=scenario_name, case_name=case_name)
     return render_template(
         "index.html", doc=case.__doc__, css=getattr(case, "CSS", None)
     )
@@ -98,7 +98,7 @@ def study_scenario_case(scenario_name: str, case_name: str) -> str:
 
 @app.get("/study/<scenario_name>/<case_name>/items")
 def study_scenario_case_items(scenario_name: str, case_name: str) -> Response:
-    case = get_case_instance(scenario_name=scenario_name, case_name=case_name)
+    case = _get_case_instance(scenario_name=scenario_name, case_name=case_name)
     if not hasattr(case, "items"):
         abort(404)
     return case.items()
@@ -108,8 +108,8 @@ def study_scenario_case_items(scenario_name: str, case_name: str) -> Response:
 def study_scenario_case_answers(
     scenario_name: str, case_name: str
 ) -> Response:
-    # get_case_instance to ensure scenario exists
-    get_case_instance(scenario_name=scenario_name, case_name=case_name)
+    # _get_case_instance to ensure scenario exists
+    _get_case_instance(scenario_name=scenario_name, case_name=case_name)
     key = request.args.get("key", "")
     secret = app.config["SECRET_KEY"]
     expected_key = hashlib.sha256(
@@ -132,7 +132,7 @@ def study_scenario_case_index(
     data = request.json
     username = str(data["username"])
     seed = int(data["seed"])
-    case = get_case_instance(scenario_name=scenario_name, case_name=case_name)
+    case = _get_case_instance(scenario_name=scenario_name, case_name=case_name)
     if data.get("answer"):
         now = datetime.now()
         answer = data["answer"]
@@ -174,5 +174,5 @@ def study_scenario_case_index(
 
 @app.route("/study/<scenario_name>/<case_name>/file/<path:file_path>")
 def file(scenario_name: str, case_name: str, file_path: str) -> Response:
-    case = get_case_instance(scenario_name=scenario_name, case_name=case_name)
+    case = _get_case_instance(scenario_name=scenario_name, case_name=case_name)
     return case.file(file_path)
