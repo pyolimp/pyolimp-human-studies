@@ -85,12 +85,20 @@
         show_page("login");
     }
 
+    function form_data(response) {
+        const form = document.getElementById("responseform");
+        const formData = new FormData(form);
+        const formObject = Object.fromEntries(formData.entries());
+        formObject["response"] = response;
+        return formObject;
+    }
+
     async function test_clicked(event) {
         const target = event.target;
         if (target.tagName === "BUTTON" && target.type === "submit") {
             $("test_content").querySelectorAll("button").forEach(el => {el.disabled = true;});
             const the_test = JSON.parse(this.dataset.the_test);
-            const answer = {test: the_test, response: target.textContent};
+            const answer = {test: the_test, response: form_data(target.textContent)};
             const current_index = JSON.parse(sessionStorage.getItem(`${window.location.pathname}`));
             sessionStorage.setItem(`${window.location.pathname}`, JSON.stringify(current_index + 1));
 
@@ -129,17 +137,30 @@
         }
         lines.push("</div>");
 
+        lines.push('<form id="responseform">');
+        for (let input of the_test.inputs || []) {
+            if (input.label)
+                lines.push(`<div><label for="${input.name}">${input.label}</label></div>`)
+            if (input.type == "text")
+                lines.push(`<div><textarea cols="80" rows="2" name="${input.name}"></textarea></div>`)
+            if (input.type == "button")
+                lines.push(`<div><button name="${input.name}">${input.value}</button></div>`)
+        }
         lines.push('<div style="display:flex;justify-content:center;">');
         for (let choice of the_test.choices || []) {
             lines.push(`<button>${choice}</button>`)
         }
         lines.push("</div>");
+        lines.push("</form>");
         page.innerHTML = lines.join("\n");
         if (the_test.check_time_ms) {
             clearTimeout(hide_timer);
             hide_timer = setTimeout(() => {
                 page.querySelectorAll("img").forEach(el => {el.style.visibility = "hidden";});
             }, the_test.check_time_ms)
+        }
+        if (typeof on_create_test_page === "function") {
+            on_create_test_page(the_test);
         }
     }
 
