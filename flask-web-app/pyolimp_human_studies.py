@@ -13,19 +13,25 @@ from __future__ import annotations
 from datetime import datetime
 import json
 from fcntl import flock, LOCK_EX, LOCK_UN
-from flask import Flask
+from flask import Flask, send_file
 from flask import request, render_template, Response, abort
 from scenarios import Scenario
+import hashlib
+from pathlib import Path
+import importlib
 
 
 app = Flask(__name__)
-from pathlib import Path
+app.config.from_file("config_hs.json", load=json.load)
+assert "SECRET_KEY" in app.config, (
+    "Required for loading answers from web."
+    " Generate using `openssl rand -base64 33`"
+)
 
-import importlib
 
 scenarios = [
     path.stem
-    for path in (Path(__file__).parent / "scenarios").glob("*.py")
+    for path in Path(__file__).with_name("scenarios").glob("*.py")
     if path.name != "__init__.py"
 ]
 
@@ -39,6 +45,10 @@ def list_scenarios() -> str:
         (f"study/{scenario}/", scenario.capitalize()) for scenario in scenarios
     ]
     return render_template("links_list.html", title="Scenarios", links=links)
+
+
+answers_root = Path(__file__).with_name("answers")
+answers_root.mkdir(exist_ok=True)
 
 
 @app.route("/study/<scenario>/")
@@ -78,7 +88,7 @@ def get_case_instance(scenario_name: str, case_name: str) -> Scenario:
     return isinstance
 
 
-@app.route("/study/<scenario_name>/<case_name>/")
+@app.get("/study/<scenario_name>/<case_name>/")
 def study_scenario_case(scenario_name: str, case_name: str) -> str:
     case = get_case_instance(scenario_name=scenario_name, case_name=case_name)
     return render_template(
@@ -86,12 +96,33 @@ def study_scenario_case(scenario_name: str, case_name: str) -> str:
     )
 
 
-@app.route("/study/<scenario_name>/<case_name>/items")
+@app.get("/study/<scenario_name>/<case_name>/items")
 def study_scenario_case_items(scenario_name: str, case_name: str) -> Response:
     case = get_case_instance(scenario_name=scenario_name, case_name=case_name)
     if not hasattr(case, "items"):
         abort(404)
     return case.items()
+
+
+@app.get("/study/<scenario_name>/<case_name>/answers.ldj")
+def study_scenario_case_answers(
+    scenario_name: str, case_name: str
+) -> Response:
+    # get_case_instance to ensure scenario exists
+    get_case_instance(scenario_name=scenario_name, case_name=case_name)
+    key = request.args.get("key", "")
+    secret = app.config["SECRET_KEY"]
+    expected_key = hashlib.sha256(
+        f"{scenario_name}|{secret}|{case_name}".encode()
+    ).hexdigest()
+    if key != expected_key:
+        print(f"{key} != {expected_key}")
+        abort(403)
+    path = answers_root / scenario_name / f"{case_name}.ldj"
+    try:
+        return send_file(path, as_attachment=True)
+    except FileNotFoundError:
+        abort(404)
 
 
 @app.post("/study/<scenario_name>/<case_name>/<int:index>")
@@ -122,11 +153,19 @@ def study_scenario_case_index(
             + "\n"
         )
 
-        with open("answers.ldj", "a") as ldj:
-            # use process locking to allow multiprocess server execution
-            flock(ldj, LOCK_EX)
-            ldj.write(line)
-            flock(ldj, LOCK_UN)
+        ldj_path = answers_root / scenario_name / f"{case_name}.ldj"
+        for _ in range(2):
+            try:
+                with ldj_path.open("a") as ldj:
+                    # use process locking to allow multiprocess server execution
+                    flock(ldj, LOCK_EX)
+                    try:
+                        ldj.write(line)
+                    finally:
+                        flock(ldj, LOCK_UN)
+                break
+            except FileNotFoundError:
+                ldj_path.parent.mkdir()
     try:
         return case.item_for_user(seed=seed, idx=index)
     except IndexError:
