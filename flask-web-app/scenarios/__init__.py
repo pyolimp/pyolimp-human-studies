@@ -1,7 +1,8 @@
 from __future__ import annotations
-from typing import ClassVar, TypedDict, NotRequired, Any
+from typing import ClassVar, TypedDict, Any, Literal
 from flask import Response
 from abc import ABC, abstractmethod
+from typing_extensions import NotRequired
 
 
 class Frame(TypedDict):
@@ -9,11 +10,53 @@ class Frame(TypedDict):
     choices: NotRequired[list[str]]
 
 
+class Input(TypedDict):
+    type: Literal["text"]
+    required: NotRequired[Literal[True]]
+    label: NotRequired[str]
+    name: str
+
+
+class Submit(TypedDict):
+    type: Literal["submit"]
+    label: NotRequired[str]
+    name: str
+    value: str
+
+
+class Button(TypedDict):
+    type: Literal["button"]
+    label: NotRequired[str]
+    name: str
+    value: str
+
+
+class HTML(TypedDict):
+    type: Literal["html"]
+    label: NotRequired[str]
+    html: str
+
+
+class ChoiceItem(TypedDict):
+    label: NotRequired[str]
+    value: str
+
+
+class Choice(TypedDict):
+    type: NotRequired[Literal["choice"]]
+    name: str
+    label: NotRequired[str]
+    choices: list[ChoiceItem]
+
+
 class SingleTest(TypedDict):
     start_pause_ms: NotRequired[float]  # show gray screen before
     check_time_ms: NotRequired[float]  # hide choices in
     frames: list[Frame]
     choices: NotRequired[list[str]]  # global choices
+    inputs: NotRequired[
+        list[Input | Submit | HTML | Choice | Button]
+    ]  # new choices
     gap: NotRequired[str]  # gap size, for example "100px on 8em"
     text: NotRequired[str]  # text that is shown above question
 
