@@ -52,6 +52,7 @@
     // utils
     let $ = document.getElementById.bind(document);
     const delay = (ms) => new Promise(c => setTimeout(c, ms));
+    const assert = (cond) => !cond && alert(`PROGRAMMER ERROR`);
 
     async function post(url, data) {
         const body = JSON.stringify(data);
@@ -85,8 +86,31 @@
         show_page("login");
     }
 
-    function form_data(response) {
-        const form = document.getElementById("responseform");
+    async function submit_response_form(form, response) {
+        assert(form.tagName === "FORM");
+        const the_test = JSON.parse($("test_content").dataset.the_test);
+        const answer = {
+            test: the_test,
+            response: form_data(form, response)
+        };
+        form.querySelectorAll("button, input, textarea, select").forEach(el => {el.disabled = true;});
+        const current_index = JSON.parse(sessionStorage.getItem(`${window.location.pathname}`));
+        sessionStorage.setItem(`${window.location.pathname}`, JSON.stringify(current_index + 1));
+
+        const test_test = await request_next_test(answer);
+        await create_test_page(test_test);
+    }
+
+    async function on_submit(event) {
+        const form = event.target;
+        if (form.id != "responseform") {
+            return;
+        }
+        event.preventDefault();
+        await submit_response_form(form, event.submitter.textContent);
+    }
+
+    function form_data(form, response) {
         const formData = new FormData(form);
         const formObject = Object.fromEntries(formData.entries());
         formObject["response"] = response;
@@ -95,15 +119,8 @@
 
     async function test_clicked(event) {
         const target = event.target;
-        if (target.tagName === "BUTTON" && target.type === "submit") {
-            $("test_content").querySelectorAll("button").forEach(el => {el.disabled = true;});
-            const the_test = JSON.parse(this.dataset.the_test);
-            const answer = {test: the_test, response: form_data(target.textContent)};
-            const current_index = JSON.parse(sessionStorage.getItem(`${window.location.pathname}`));
-            sessionStorage.setItem(`${window.location.pathname}`, JSON.stringify(current_index + 1));
-
-            const test_test = await request_next_test(answer);
-            await create_test_page(test_test);
+        if (target.tagName === "BUTTON" && target.type === "button") {
+            await submit_response_form(target.form, target.textContent);
         }
     }
 
@@ -140,15 +157,40 @@
         lines.push('<form id="responseform">');
         for (let input of the_test.inputs || []) {
             if (input.label)
-                lines.push(`<div><label for="${input.name}">${input.label}</label></div>`)
-            if (input.type == "text")
-                lines.push(`<div><textarea cols="80" rows="2" name="${input.name}"></textarea></div>`)
-            if (input.type == "button")
-                lines.push(`<div><button name="${input.name}">${input.value}</button></div>`)
+                lines.push(`<div><label for="${input.name}">${input.label}</label></div>`);
+            if (input.type == "text") {
+                const div = document.createElement("div");
+                const textarea = document.createElement("textarea");
+                div.appendChild(textarea);
+                textarea.setAttribute("cols", "80");
+                textarea.setAttribute("rows", "2");
+                textarea.setAttribute("name", input.name);
+                if (input.required) {
+                    textarea.required = true;
+                }
+                lines.push(div.innerHTML);
+            }
+            else if (input.type == "submit" || input.type == "button")
+                lines.push(`<div><button name="${input.name}" type="${input.type}">${input.value}</button></div>`);
+            else if (input.type == "html")
+                lines.push(input.html);
+            else if (input.type == "choice") {
+                const s = document.createElement("select");
+                s.setAttribute("name", input.name);
+                for (let item of input.choices) {
+                    const option = document.createElement("option");
+                    option.setAttribute("value", item.value);
+                    option.innerText = item.label;
+                    s.appendChild(option);
+                }
+                lines.push(s.outerHTML);
+            } else {
+                alert(`Invalid input type: "${input.type}" - programmer error`);
+            }
         }
         lines.push('<div style="display:flex;justify-content:center;">');
         for (let choice of the_test.choices || []) {
-            lines.push(`<button>${choice}</button>`)
+            lines.push(`<button>${choice}</button>`);
         }
         lines.push("</div>");
         lines.push("</form>");
@@ -159,6 +201,7 @@
                 page.querySelectorAll("img").forEach(el => {el.style.visibility = "hidden";});
             }, the_test.check_time_ms)
         }
+        page.querySelector("intput,textarea")?.focus();
         if (typeof on_create_test_page === "function") {
             on_create_test_page(the_test);
         }
@@ -188,21 +231,19 @@
     async function setup() {
         username = sessionStorage.getItem("username");
         seed = sessionStorage.getItem("seed");
-        async function start_for_user() {
-            seed = new Date().getTime();
-            sessionStorage.setItem("username", username);
-            sessionStorage.setItem("seed", seed);
-            await next_step();
-        }
         $("authForm").addEventListener("submit", async function () {
             event.preventDefault();
             const form = new Map(new FormData(this));
             username = form.get("username").trim();
-            await start_for_user();
-        });
+            seed = new Date().getTime();
+            sessionStorage.setItem("username", username);
+            sessionStorage.setItem("seed", seed);
+            await next_step();
 
+        });
         $("test_content").addEventListener("click", test_clicked);  // check "submit" was clicked
         $("start_over").addEventListener("click", ask_username);
+        document.addEventListener("submit", on_submit);
         await next_step();
     }
 
