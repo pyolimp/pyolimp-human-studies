@@ -7,7 +7,6 @@ from random import Random
 from flask import Response, send_from_directory, jsonify
 from . import Scenario, SingleTest
 
-
 WELCOME_CSS = """<style>
 .container {
     background-color: #aaa;
@@ -66,10 +65,7 @@ li {
 """
 
 
-
-WELCOME = (
-    WELCOME_CSS
-    + """
+WELCOME = WELCOME_CSS + """
 
     
     <div class="container">
@@ -97,7 +93,6 @@ WELCOME = (
     </div>
 </div>
 """
-)
 EXAMPLE = """
 Пример (задача Бонгарда №107):
 Правильный ответ: на рисунке выше у фигур слева ровно 3 «простых» (прямых) стороны, а у фигур справа — ровно 3 «сложных»
@@ -114,10 +109,9 @@ INTROTWO = """
 
 """
 
+
 class Bongard(Scenario):
-    """
-   
-    """
+    """ """
 
     CSS = """
     img {width: 50vw;}
@@ -131,22 +125,26 @@ class Bongard(Scenario):
     """
     __doc__ = WELCOME
 
-
-
     def __init__(self) -> None:
-        self._root = Path("/mnt/storage/bong_bench/pyolimp-human-studies/data/problems")
-        self._json_dir = Path("/mnt/storage/bong_bench/pyolimp-human-studies/data/batches")
-        self._example_image = ("demonstration_test_1.png")
+        self._root = Path(
+            "/mnt/storage/bong_bench/pyolimp-human-studies/data/problems"
+        )
+        self._json_dir = Path(
+            "/mnt/storage/bong_bench/pyolimp-human-studies/data/batches"
+        )
+        self._example_image = "demonstration_test_1.png"
         self._items = {}
 
     def file(self, path: str) -> Response:
         return send_from_directory(self._root, path)
-    
+
     def _read_next_batch(self):
         for _ in range(10):
             filename = next(self._json_dir.glob("*.json"))
             try:
-                new_path = filename.rename(self._json_dir / (filename.stem + '.donejson'))
+                new_path = filename.rename(
+                    self._json_dir / (filename.stem + ".donejson")
+                )
             except FileNotFoundError:
                 continue
             text = new_path.read_text()
@@ -158,15 +156,12 @@ class Bongard(Scenario):
         return {
             "frames": [],
             "inputs": [
-                {
-                    "type": "html",
-                    "html": INTROTWO
-                },
+                {"type": "html", "html": INTROTWO},
                 {
                     "type": "text",
                     "label": "Возраст",
                     "name": "solution",
-                    "required": True
+                    "required": True,
                 },
                 {
                     "type": "choice",
@@ -175,13 +170,13 @@ class Bongard(Scenario):
                     "choices": [
                         {"label": "Мужской", "value": "m"},
                         {"label": "Женский", "value": "f"},
-                    ]
+                    ],
                 },
                 {
                     "type": "text",
                     "label": "Род деятельности",
                     "name": "occupation",
-                    "required": True
+                    "required": True,
                 },
                 {
                     "type": "submit",
@@ -190,35 +185,27 @@ class Bongard(Scenario):
                 },
             ],
         }
+
     def example_1(self) -> SingleTest:
         example_path = self._example_image
         return {
-            "frames": [           
-                {"path": example_path}
-            ],
+            "frames": [{"path": example_path}],
             "inputs": [
-                {
-                    "type": "html",
-                    "html": EXAMPLE
-                },
+                {"type": "html", "html": EXAMPLE},
                 {
                     "type": "button",
                     "value": "Перейти к решению задач",
-                    "name": "continue"
-                }
-            ]
+                    "name": "continue",
+                },
+            ],
         }
-    
+
     @staticmethod
     def _thankyou() -> SingleTest:
         return {
             "frames": [],
             "inputs": [
-
-                {
-                    "type": "html",
-                    "html": "example text"
-                },
+                {"type": "html", "html": "example text"},
                 {
                     "type": "button",
                     "value": "Конец",
@@ -228,40 +215,37 @@ class Bongard(Scenario):
                     "type": "text",
                     "label": "Ваш email",
                     "name": "email",
-                }
-            ]
+                },
+            ],
         }
+
     def item_for_user(self, seed: int, idx: int) -> SingleTest:
-        
+
         if idx == 0:
             try:
                 self._items[seed] = self._read_next_batch()
             except Exception as e:
                 return {
-                    "frames": [
-                        {"path": ""}
-                    ],
+                    "frames": [{"path": ""}],
                     "inputs": [
                         {
                             "type": "text",
                             "label": f"Тесты закончились - '{e}'",
                             "name": "text",
                         },
-                    ]
-                    }
+                    ],
+                }
             else:
                 return self._userinfo()
-            
+
         if idx == 1:
-            return self.example_1()  
+            return self.example_1()
         if idx == len(self._items[seed]["collages"]) + 1:
             return self._thankyou()
 
         path = self._items[seed]["collages"][idx - 1]
         ret: SingleTest = {
-            "frames": [
-                {"path": path}
-            ],
+            "frames": [{"path": path}],
             "inputs": [
                 {
                     "type": "text",
@@ -279,11 +263,9 @@ class Bongard(Scenario):
                     "value": "Не знаю",
                     "name": "donotknow",
                 },
-            ]
+            ],
         }
         return ret
-    
 
     def items(self) -> Response:
         return jsonify(list(map(str, self._items)))
-
