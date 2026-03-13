@@ -158,7 +158,7 @@
         if (username === null) {
             await ask_username();
         } else {
-            $("user_label").innerHTML = `Hi, ${username}`
+            $("user_label").innerText = `Hi, ${username}`
             const the_test = await request_next_test(undefined);
             await create_test_page(the_test);
         }
