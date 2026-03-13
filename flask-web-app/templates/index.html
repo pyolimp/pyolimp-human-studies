@@ -173,16 +173,11 @@
             sessionStorage.setItem("seed", seed);
             await next_step();
         }
-        $("login_btn").addEventListener("click", async () => {
-            username = $("username_input").value;
+        $("authForm").addEventListener("submit", async function () {
+            event.preventDefault();
+            const form = new Map(new FormData(this));
+            username = form.get("username").trim();
             await start_for_user();
-        });
-        $("username_input").addEventListener("keydown", async function (event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();  // just in case
-                username = this.value.trim();
-                await start_for_user();
-            }
         });
 
         $("test_content").addEventListener("click", test_clicked);  // check "submit" was clicked
@@ -197,9 +192,13 @@
 <div id="login" style="display: none;">
     <div class="doc">{{ doc|safe }}</div>
     <div id="auth">
-        <label for="username_input">Username</label>
-        <input type="text" id="username_input" placeholder="Enter your username..." value="Anonymous-{{ range(10000, 100000000) | random }}" />
-        <button id="login_btn" type="button">Confirm</button>
+        <form id="authForm">
+            <label>
+                Username
+                <input type="text" name="username" placeholder="Enter your username..." value="Anonymous-{{ range(10000, 100000000) | random }}" required/>
+            </label>
+            <button type="submit">Confirm</button>
+        </form>
     </div>
 </div>
 <div id="test_div" style="display: none;">
