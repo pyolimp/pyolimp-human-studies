@@ -113,6 +113,7 @@ END = """
 <div class="container"> Спасибо за прохождение. Если хотите получить результаты исследования, можете оставить email
 """
 
+
 class Bongard(Scenario):
     """ """
 
@@ -214,7 +215,7 @@ class Bongard(Scenario):
                     "label": "Ваш email",
                     "name": "email",
                 },
-                                {
+                {
                     "type": "button",
                     "value": "Конец",
                     "name": "continue",
