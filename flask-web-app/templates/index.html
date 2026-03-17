@@ -139,6 +139,7 @@
         if (the_test.text) {
             lines.push(the_test.text);
         }
+        lines.push('<form id="responseform">');
         lines.push(`<div style="display:flex;gap:${ the_test.gap ?? '8em'}">`);
         for (let frame of the_test.frames) {
             const buttons = frame["choices"] && [
@@ -154,7 +155,6 @@
         }
         lines.push("</div>");
 
-        lines.push('<form id="responseform">');
         for (let input of the_test.inputs || []) {
             if (input.label)
                 lines.push(`<div><label for="${input.name}">${input.label}</label></div>`);
