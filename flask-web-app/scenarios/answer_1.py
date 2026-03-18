@@ -8,7 +8,6 @@ from flask import Response, send_from_directory, jsonify
 from . import Scenario, SingleTest
 from codecs import encode
 
-
 WELCOME_CSS = """<style>
 .container {
     background-color: #aaa;
@@ -160,6 +159,7 @@ END = """
 <div class="container"> Спасибо за прохождение. Если хотите получить результаты исследования по его окончании, оставьте, пожалуйста, email.
 """
 
+
 class Bongard(Scenario):
     """ """
 
@@ -196,8 +196,8 @@ class Bongard(Scenario):
         self._items = {}
 
     def file(self, path: str) -> Response:
-        if path not in[self._example_one, self._example_two]:
-            path = encode(path, 'rot_13')
+        if path not in [self._example_one, self._example_two]:
+            path = encode(path, "rot_13")
         return send_from_directory(self._root, path)
 
     def _read_next_batch(self):
@@ -219,7 +219,6 @@ class Bongard(Scenario):
             "frames": [],
             "inputs": [
                 {"type": "html", "html": FORMBEGIN},
-
                 {
                     "type": "text",
                     "label": "Возраст",
@@ -248,20 +247,20 @@ class Bongard(Scenario):
                 },
             ],
         }
+
     @staticmethod
     def _instruction() -> SingleTest:
         return {
             "frames": [],
             "inputs": [
                 {"type": "html", "html": INTROTWO},
-                                {
+                {
                     "type": "button",
                     "value": "Продолжить",
                     "name": "continue",
                 },
-            ]
+            ],
         }
-
 
     def example_one(self) -> SingleTest:
         example_path = self._example_one
@@ -275,7 +274,6 @@ class Bongard(Scenario):
                     "name": "continue1",
                 },
             ],
-            
         }
 
     def example_two(self) -> SingleTest:
@@ -336,7 +334,7 @@ class Bongard(Scenario):
         path = paths[idx - 4]
 
         ret: SingleTest = {
-            "frames": [{"path": encode(path, 'rot_13')}],
+            "frames": [{"path": encode(path, "rot_13")}],
             "inputs": [
                 {
                     "type": "html",
