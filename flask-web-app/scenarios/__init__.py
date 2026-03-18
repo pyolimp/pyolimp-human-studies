@@ -24,11 +24,10 @@ class WithLabel(TypedDict):
 
 
 class FormElement(WithLabel):
+    name: str
     """
     Name of the form value
     """
-
-    name: str
 
 
 class Input(WithLabel):
