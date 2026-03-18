@@ -27,6 +27,7 @@ class FormElement(WithLabel):
     """
     Name of the form value
     """
+
     name: str
 
 
