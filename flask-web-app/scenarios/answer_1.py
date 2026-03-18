@@ -6,6 +6,8 @@ from itertools import combinations
 from random import Random
 from flask import Response, send_from_directory, jsonify
 from . import Scenario, SingleTest
+from codecs import encode
+
 
 WELCOME_CSS = """<style>
 .container {
@@ -59,7 +61,7 @@ li {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
             document.querySelector('[name="donotknow"]').className = "visible";
-        }, 1000 * 60);
+        }, 100);
     }
 </script>
 """
@@ -70,49 +72,93 @@ WELCOME = WELCOME_CSS + """
     
     <div class="container">
 
-    <h1>Эксперимент по решению задач Бонгарда основанных на ДЗЗ</h1>
-
-    <p>Добро пожаловать в эксперимент по решению задач Бонгарда основанных на дистанционном зондировании Земли!</p>
+    <p>Уважаемый участник,</p>
+    <p>Добро пожаловать в эксперимент по зрительному распознаванию образов человеком. Эксперимент проводится лабораторией №11 ИППИ РАН в исключительно научных целях.</p>
+    <h2>Как проходит эксперимент</h2>
     <p>
-      На экране вам будут показываться задачи Бонгарда: Каждая задача содержит 2 набора изображений: левый и правый.
-      При этом каждый набор имеет общее свойство, которое объединяет изображения одного набора, но отличает от другого.
-      Вы должны будете определить это отличие для каждой задачи и напечатать ответ в соответствующей графе
+      
+    В ходе эксперимента вам нужно будет решить 20 задач на сравнение изображений. Изображения представляют собой снимки дистанционного зондирования Земли (спутниковые или с летательных аппаратов). Решение всех 20 задач займет около 30 минут. 
+
+    </p>
+    <p>
+      
+    Вы можете прекратить участие в эксперименте в любой момент, закрыв вкладку браузера. Если после этого вы захотите вернуться к эксперименту, задачи начнутся с начала. 
+
     </p>
 
-    <p>
-      Вам предстоит решить <b>20 задач</b> 
-    </p>
-
+    <h2> Важно</h2>
+    
     <div class="important-note">
-        <h2>Важно:</h2>
+        
         <ul>
             <li>Эксперимент полностью анонимен.</li>
             <li>Проходить эксперимент следует только на компьютере или ноутбуке —
                 использование телефонов или планшетов запрещено, чтобы избежать искажений восприятия.</li>
         </ul>
     </div>
+
+    <p> Введите любой псевдоним или оставьте случайно сгенерированный. Псевдоним будет использоваться для маркировки ответов.  </p>
 </div>
 """
-EXAMPLE = """
-<h3>Пример (задача Бонгарда №107):</h3>
+FORMBEGIN = """
+    <div class="container">
 
-<p>Правильный ответ: на рисунке выше у фигур слева ровно 3 «простых» (прямых) стороны, а у фигур справа — ровно 3 «сложных»</p>
-<br>
+<li>Чтобы начать эксперимент, заполните, пожалуйста, анкету</li>
+<li>Нажимая на кнопку «Начать эксперимент», вы подтверждаете, что соглашаетесь с описанными выше условиями участия в эксперименте.</li>
+
+
 """
 
 INTROTWO = """
-<div class="container"> <h1>Инструкция</h1> <p> Вам предстоит решить <b>20 задач</b>. 
-В каждой из задач будет две группы изображений, по 6 изображений в каждой: слева и справа. </p> 
-<p> Изображения представляют собой снимки дистанционного зондирования Земли: снимки со спутника или летательных аппаратов. 
-В каждой группе изображения объединены общим признаком, и этим же признаком две группы отличаются между собой. </p> 
-<p> В ответе вам нужно в свободной форме как можно точнее сформулировать, в чем отличие двух групп картинок. </p> 
-<div class="important-note"> <h2>Важно:</h2> <ul> <li>По истечении 60 секунд появится возможность кнопка «Не знаю» — вы можете нажать ее, чтобы перейти к следующей задаче.</li> 
-<li>Задачи появляются последовательно, вернуться к ранее решенной задаче нельзя.</li> </ul> </div>
+<div class="container"> <h2>Инструкция</h2>
+    <p>
+      
+    Вам предстоит решить 20 задач по зрительному распознаванию образов на снимках дистанционного зондирования Земли (аналогии задач Бонгарда).
+
+    </p>
+
+    <p>
+      
+    В каждой задаче вы увидите 2 набора изображений, по 6 изображений в каждом: левый и правый. Изображения в левом наборе объединены общим признаком, которым не обладают изображения в правом наборе. И наоборот, изображения в правом наборе обладают признаком, которого нет в изображениях левого набора. Для решения задачи вам нужно сформулировать эти признаки.
+
+    </p>
+    <p>
+      
+    По истечении 60 секунд появится кнопка «Не знаю» — вы можете нажать ее, чтобы перейти к следующей задаче. Задачи появляются последовательно, вернуться к предыдущей задаче нельзя.
+
+    </p>
+    <p>
+      
+    Далее вы увидите примеры задач Бонгарда.
+
+    </p>
 """
-END = """
-<div class="container"> Спасибо за прохождение. Если хотите получить результаты исследования, можете оставить email
+EXAMPLEONE = """
+
+<h2>Пример (задача Бонгарда №2):</h2>
+
+<h3>Правильный ответ: 
+</h3>
+<table width=100%><tr><td align=center>
+
+<li>Большие фигуры </li>
+</td><td align=center>
+<li>Маленькие фигуры</li>
+</td></tr></table>
+
+"""
+EXAMPLETWO = """
+<h3>Пример (задача Бонгарда №10):</h3>
+<table width=100%><tr><td align=center>
+<li>Треугольники</li>
+</td><td align=center>
+<li>Четырехугольники</li>
+</td></tr></table>
 """
 
+END = """
+<div class="container"> Спасибо за прохождение. Если хотите получить результаты исследования по его окончании, оставьте, пожалуйста, email.
+"""
 
 class Bongard(Scenario):
     """ """
@@ -125,6 +171,15 @@ class Bongard(Scenario):
     .visible {
         visibility: initial;
     }
+    #responseform {
+        margin-top:1em;
+    }
+    .submit_ok {
+        margin: 1.3em;
+    }
+    .submit_ok, .button_donotknow {
+        text-align: center;
+    }
 
     """
     __doc__ = WELCOME
@@ -136,10 +191,13 @@ class Bongard(Scenario):
         self._json_dir = Path(
             "/mnt/storage/bong_bench/pyolimp-human-studies/data/batches"
         )
-        self._example_image = "demonstration_test_1.png"
+        self._example_one = "demonstration_1.png"
+        self._example_two = "demonstration_2.png"
         self._items = {}
 
     def file(self, path: str) -> Response:
+        if path not in[self._example_one, self._example_two]:
+            path = encode(path, 'rot_13')
         return send_from_directory(self._root, path)
 
     def _read_next_batch(self):
@@ -160,7 +218,8 @@ class Bongard(Scenario):
         return {
             "frames": [],
             "inputs": [
-                {"type": "html", "html": INTROTWO},
+                {"type": "html", "html": FORMBEGIN},
+
                 {
                     "type": "text",
                     "label": "Возраст",
@@ -189,13 +248,42 @@ class Bongard(Scenario):
                 },
             ],
         }
+    @staticmethod
+    def _instruction() -> SingleTest:
+        return {
+            "frames": [],
+            "inputs": [
+                {"type": "html", "html": INTROTWO},
+                                {
+                    "type": "button",
+                    "value": "Продолжить",
+                    "name": "continue",
+                },
+            ]
+        }
 
-    def example_1(self) -> SingleTest:
-        example_path = self._example_image
+
+    def example_one(self) -> SingleTest:
+        example_path = self._example_one
         return {
             "frames": [{"path": example_path}],
             "inputs": [
-                {"type": "html", "html": EXAMPLE},
+                {"type": "html", "html": EXAMPLEONE},
+                {
+                    "type": "button",
+                    "value": "Продолжить",
+                    "name": "continue1",
+                },
+            ],
+            
+        }
+
+    def example_two(self) -> SingleTest:
+        example_path = self._example_two
+        return {
+            "frames": [{"path": example_path}],
+            "inputs": [
+                {"type": "html", "html": EXAMPLETWO},
                 {
                     "type": "button",
                     "value": "Перейти к решению задач",
@@ -215,11 +303,6 @@ class Bongard(Scenario):
                     "label": "Ваш email",
                     "name": "email",
                 },
-                {
-                    "type": "button",
-                    "value": "Конец",
-                    "name": "continue",
-                },
             ],
         }
 
@@ -230,7 +313,7 @@ class Bongard(Scenario):
                 self._items[seed] = self._read_next_batch()
             except Exception as e:
                 return {
-                    "frames": [{"path": ""}],
+                    "frames": [],
                     "inputs": [
                         {
                             "type": "text",
@@ -241,21 +324,47 @@ class Bongard(Scenario):
                 }
             else:
                 return self._userinfo()
-
+        paths = self._items[seed]["collages"]
         if idx == 1:
-            return self.example_1()
-        if idx == len(self._items[seed]["collages"]) + 1:
+            return self._instruction()
+        if idx == 2:
+            return self.example_one()
+        if idx == 3:
+            return self.example_two()
+        if idx == len(paths) + 4:
             return self._thankyou()
+        path = paths[idx - 4]
 
-        path = self._items[seed]["collages"][idx - 1]
         ret: SingleTest = {
-            "frames": [{"path": path}],
+            "frames": [{"path": encode(path, 'rot_13')}],
             "inputs": [
                 {
+                    "type": "html",
+                    "html": "<table width=100%><tr><td align=center>",
+                },
+                {
                     "type": "text",
-                    "label": "В чем разница между наборами?",
+                    "label": "Признак для левого набора",
                     "name": "solution",
                     "required": True,
+                    "cols": "44",
+                    "rows": "4",
+                },
+                {
+                    "type": "html",
+                    "html": "</td><td align=center>",
+                },
+                {
+                    "type": "text",
+                    "label": "Признак для правого набора",
+                    "name": "solution",
+                    "required": True,
+                    "cols": "44",
+                    "rows": "4",
+                },
+                {
+                    "type": "html",
+                    "html": "</td></tr></table>",
                 },
                 {
                     "type": "submit",

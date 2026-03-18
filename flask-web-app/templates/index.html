@@ -156,22 +156,38 @@
 
         lines.push('<form id="responseform">');
         for (let input of the_test.inputs || []) {
-            if (input.label)
-                lines.push(`<div><label for="${input.name}">${input.label}</label></div>`);
+            if (input.label) {
+                const div = document.createElement("div");
+                div.className = `label_${input.name}`;
+                const label = document.createElement("label");
+                div.appendChild(label);
+                label.setAttribute("for", input.name);
+                label.innerHTML = input.label;
+                lines.push(div.outerHTML);
+            }
             if (input.type == "text") {
                 const div = document.createElement("div");
+                div.className = `text_${input.name}`;
                 const textarea = document.createElement("textarea");
                 div.appendChild(textarea);
-                textarea.setAttribute("cols", "80");
-                textarea.setAttribute("rows", "2");
+                textarea.setAttribute("cols", input.cols || "80");
+                textarea.setAttribute("rows", input.rows || "2");
                 textarea.setAttribute("name", input.name);
                 if (input.required) {
                     textarea.required = true;
                 }
-                lines.push(div.innerHTML);
+                lines.push(div.outerHTML);
             }
-            else if (input.type == "submit" || input.type == "button")
-                lines.push(`<div><button name="${input.name}" type="${input.type}">${input.value}</button></div>`);
+            else if (input.type == "submit" || input.type == "button") {
+                const div = document.createElement("div");
+                div.className = `${input.type}_${input.name}`;
+                const button = document.createElement("button");
+                div.appendChild(button);
+                button.setAttribute("name", input.name);
+                button.setAttribute("type", input.type);
+                button.innerHTML = input.value;
+                lines.push(div.outerHTML);
+            }
             else if (input.type == "html")
                 lines.push(input.html);
             else if (input.type == "choice") {

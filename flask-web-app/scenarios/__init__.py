@@ -15,6 +15,8 @@ class Input(TypedDict):
     required: NotRequired[Literal[True]]
     label: NotRequired[str]
     name: str
+    cols: NotRequired[str]
+    rows: NotRequired[str]
 
 
 class Submit(TypedDict):
