@@ -6,48 +6,84 @@ from typing_extensions import NotRequired
 
 
 class Frame(TypedDict):
+    """
+    Project `pyolimp-human-studies` is designed to evaluate images.
+    This item represents one image with multiple choices
+    """
+
     path: str
     choices: NotRequired[list[str]]
 
 
-class Input(TypedDict):
+class WithLabel(TypedDict):
+    """
+    Every added item can have label that is rendered as div
+    """
+
+    label: NotRequired[str]
+
+
+class FormElement(WithLabel):
+    """
+    Name of the form value
+    """
+    name: str
+
+
+class Input(WithLabel):
+    """
+    Element rendered as a textarea
+    """
+
     type: Literal["text"]
     required: NotRequired[Literal[True]]
-    label: NotRequired[str]
-    name: str
     cols: NotRequired[str]
     rows: NotRequired[str]
 
 
-class Submit(TypedDict):
+class Submit(FormElement):
+    """
+    Button that will submit the form and validate `required` input elements
+    """
+
     type: Literal["submit"]
-    label: NotRequired[str]
-    name: str
     value: str
 
 
-class Button(TypedDict):
+class Button(FormElement):
+    """
+    Button that will submit the form without validating input elements
+    """
+
     type: Literal["button"]
-    label: NotRequired[str]
-    name: str
     value: str
 
 
-class HTML(TypedDict):
+class HTML(WithLabel):
+    """
+    Insert raw HTML, for example, to show an image or rich text
+    """
+
     type: Literal["html"]
-    label: NotRequired[str]
     html: str
 
 
 class ChoiceItem(TypedDict):
-    label: NotRequired[str]
+    """
+    HTML Option element
+    """
+
+    label: str
+    "User visible text"
     value: str
 
 
-class Choice(TypedDict):
-    type: NotRequired[Literal["choice"]]
-    name: str
-    label: NotRequired[str]
+class Choice(FormElement):
+    """
+    HTML Select element with multiple choices
+    """
+
+    type: Literal["choice"]
     choices: list[ChoiceItem]
 
 
