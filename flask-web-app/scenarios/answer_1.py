@@ -60,7 +60,7 @@ li {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
             document.querySelector('[name="donotknow"]').className = "visible";
-        }, 100);
+        }, 1000 * 60);
     }
 </script>
 """
@@ -300,6 +300,11 @@ class Bongard(Scenario):
                     "type": "text",
                     "label": "Ваш email",
                     "name": "email",
+                },
+                {
+                    "type": "button",
+                    "value": "Завершить тестирование",
+                    "name": "continue",
                 },
             ],
         }
