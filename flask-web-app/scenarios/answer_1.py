@@ -306,7 +306,6 @@ class Bongard(Scenario):
                     "value": "Завершить тестирование",
                     "name": "continue",
                 },
-
             ],
         }
 
