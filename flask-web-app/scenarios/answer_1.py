@@ -179,6 +179,9 @@ class Bongard(Scenario):
     .submit_ok, .button_donotknow {
         text-align: center;
     }
+    #start_over {
+        display: none;
+    }
 
     """
     __doc__ = WELCOME
@@ -223,6 +226,7 @@ class Bongard(Scenario):
                     "label": "Возраст",
                     "name": "age",
                     "required": True,
+                    "cols": "5",
                 },
                 {
                     "type": "choice",
@@ -237,6 +241,7 @@ class Bongard(Scenario):
                     "type": "text",
                     "label": "Род деятельности",
                     "name": "occupation",
+                    "cols": "30",
                     "required": True,
                 },
                 {
@@ -299,6 +304,7 @@ class Bongard(Scenario):
                     "type": "text",
                     "label": "Ваш email",
                     "name": "email",
+                    "cols": "25",
                 },
                 {
                     "type": "button",
@@ -338,6 +344,7 @@ class Bongard(Scenario):
         path = paths[idx - 4]
 
         ret: SingleTest = {
+            "text": f"Задача {idx - 3} из {len(paths)}",
             "frames": [{"path": encode(path, "rot_13")}],
             "inputs": [
                 {
