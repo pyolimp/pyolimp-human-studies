@@ -30,15 +30,15 @@ class FormElement(WithLabel):
     """
 
 
-class Input(WithLabel):
+class Input(FormElement):
     """
     Element rendered as a textarea
     """
 
     type: Literal["text"]
     required: NotRequired[Literal[True]]
-    cols: NotRequired[str]
-    rows: NotRequired[str]
+    cols: NotRequired[int | str]
+    rows: NotRequired[int | str]
 
 
 class Submit(FormElement):
