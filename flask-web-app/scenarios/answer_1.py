@@ -199,7 +199,7 @@ class Bongard(Scenario):
     """ """
 
     CSS = """
-    img {width: 50vw;}
+    img {width: 60vw;}
     [name="donotknow"] {
         visibility: hidden;
     }
@@ -224,10 +224,10 @@ class Bongard(Scenario):
 
     def __init__(self) -> None:
         self._root = Path(
-            "../../hs_pyolimp_data/bongard/problems"
+            ...
         )
         self._json_dir = Path(
-            "../../hs_pyolimp_data/bongard/batches"
+            ...
         )
         self._example_one = "demonstration_1.png"
         self._example_two = "demonstration_2.png"
