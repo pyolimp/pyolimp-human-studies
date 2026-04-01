@@ -245,10 +245,9 @@ class Bongard(Scenario):
         for _ in range(10):
             filename = next(self._json_dir.glob("*.json"))
             try:
-                new_path = filename
-                # new_path = filename.rename(
-                #     self._json_dir / (filename.stem + ".donejson")
-                # )
+                new_path = filename.rename(
+                    self._json_dir / (filename.stem + ".donejson")
+                )
             except FileNotFoundError:
                 continue
             text = new_path.read_text()
