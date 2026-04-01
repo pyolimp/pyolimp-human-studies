@@ -218,17 +218,20 @@ class Bongard(Scenario):
     #start_over {
         display: none;
     }
-
+    #count {
+        position: absolute;
+        top: 1em;
+        left: 1em;
+    }
+    body {
+        height: initial !important;
+    }
     """
     __doc__ = WELCOME
 
     def __init__(self) -> None:
-        self._root = Path(
-            ...
-        )
-        self._json_dir = Path(
-            ...
-        )
+        self._root = ...
+        self._json_dir = ...
         self._example_one = "demonstration_1.png"
         self._example_two = "demonstration_2.png"
         self._items = {}
@@ -242,9 +245,10 @@ class Bongard(Scenario):
         for _ in range(10):
             filename = next(self._json_dir.glob("*.json"))
             try:
-                new_path = filename.rename(
-                    self._json_dir / (filename.stem + ".donejson")
-                )
+                new_path = filename
+                # new_path = filename.rename(
+                #     self._json_dir / (filename.stem + ".donejson")
+                # )
             except FileNotFoundError:
                 continue
             text = new_path.read_text()
@@ -380,7 +384,7 @@ class Bongard(Scenario):
         path = paths[idx - 4]
 
         ret: SingleTest = {
-            "text": f"Задача {idx - 3} из {len(paths)}",
+            "text": f'<div id="count">Задача {idx - 3} из {len(paths)}</div>',
             "frames": [{"path": encode(path, "rot_13")}],
             "inputs": [
                 {
