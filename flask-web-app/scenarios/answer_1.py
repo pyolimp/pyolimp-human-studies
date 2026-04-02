@@ -230,8 +230,8 @@ class Bongard(Scenario):
     __doc__ = WELCOME
 
     def __init__(self) -> None:
-        self._root = ...
-        self._json_dir = ...
+        self._root = pass
+        self._json_dir = pass
         self._example_one = "demonstration_1.png"
         self._example_two = "demonstration_2.png"
         self._items = {}
